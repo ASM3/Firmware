@@ -61,9 +61,9 @@ then
 		export SITL_GAZEBO_PATH=$curr_dir/Tools/sitl_gazebo
 		mkdir -p Tools/sitl_gazebo/Build
 		cd Tools/sitl_gazebo/Build
-		cmake ..
-		make -j4
-		gzserver ../worlds/${model}.world &
+		#cmake ..
+		#make -j4
+		#gzserver ../worlds/${model}.world &
 		SIM_PID=`echo $!`
 		gzclient &
 		GUI_PID=`echo $!`

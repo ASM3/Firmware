@@ -58,6 +58,7 @@ set(config_module_list
 	lib/launchdetection
 	lib/terrain_estimation
 	lib/runway_takeoff
+	lib/ecl/EKF/tests/base
 	)
 
 set(config_extra_builtin_cmds
