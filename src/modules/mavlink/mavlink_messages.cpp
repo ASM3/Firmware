@@ -98,6 +98,7 @@ using matrix::Vector3f;
 using matrix::wrap_2pi;
 
 #include "streams/ALTITUDE.hpp"
+#include "streams/ATMOS.hpp"
 #include "streams/ATTITUDE.hpp"
 #include "streams/ATTITUDE_QUATERNION.hpp"
 #include "streams/ATTITUDE_TARGET.hpp"
@@ -3384,8 +3385,11 @@ static const StreamListItem streams_list[] = {
 	create_stream_list_item<MavlinkStreamStorageInformation>(),
 #endif // STORAGE_INFORMATION_HPP
 #if defined(RAW_RPM_HPP)
-	create_stream_list_item<MavlinkStreamRawRpm>()
+	create_stream_list_item<MavlinkStreamRawRpm>(),
 #endif // RAW_RPM_HPP
+#if defined(ATMOS_HPP)
+	create_stream_list_item<MavlinkStreamAtmosData>()
+#endif // ATMOS_HPP
 };
 
 const char *get_stream_name(const uint16_t msg_id)
