@@ -34,8 +34,11 @@ px4_add_module(
 	MODULE drivers__sht2x
 	MAIN sht2x
 	COMPILE_FLAGS
+		-O0
 	SRCS
-		sht2x.cpp
+		SHT2X.hpp
+		SHT2X.cpp
+		SHT2X_main.cpp
 	DEPENDS
 		px4_work_queue
 	)
