@@ -40,7 +40,7 @@ PX4Hum_Temp::PX4Hum_Temp(uint32_t device_id) :
 	CDev(nullptr),
 	_sensor_hum_temp_pub{ORB_ID(sensor_hum_temp)}
 {
-	_class_device_instance = register_class_devname(HUM_TEMP_BASE_DEVICE_PATH);
+	_class_device_instance = register_class_devname(HUM_TEMP_DEVICE_PATH);
 	_sensor_hum_temp_pub.advertise();
 
 	_sensor_hum_temp_pub.get().device_id = device_id;
@@ -49,7 +49,7 @@ PX4Hum_Temp::PX4Hum_Temp(uint32_t device_id) :
 PX4Hum_Temp::~PX4Hum_Temp()
 {
 	if (_class_device_instance != -1) {
-		unregister_class_devname(HUM_TEMP_BASE_DEVICE_PATH, _class_device_instance);
+		unregister_class_devname(HUM_TEMP_DEVICE_PATH, _class_device_instance);
 	}
 
 	_sensor_hum_temp_pub.unadvertise();
