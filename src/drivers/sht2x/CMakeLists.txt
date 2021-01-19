@@ -40,5 +40,5 @@ px4_add_module(
 		SHT2X.cpp
 		SHT2X_main.cpp
 	DEPENDS
-		px4_work_queue
+		drivers_hum_temp
 	)

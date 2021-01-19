@@ -40,17 +40,12 @@
 
 #pragma once
 
+#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
 #include <math.h>
 #include <mathlib/math/filter/LowPassFilter2p.hpp>
-#include <drivers/device/i2c.h>
-#include <drivers/drv_hrt.h>
-#include <lib/perf/perf_counter.h>
-#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
-#include <px4_platform_common/px4_config.h>
-#include <px4_platform_common/defines.h>
-#include <px4_platform_common/log.h>
+#include <px4_platform_common/getopt.h>
+#include <px4_platform_common/module.h>
 #include <px4_platform_common/i2c_spi_buses.h>
-//#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
 
 
 /* SHT2X internal constants and data structures.									*/
@@ -98,47 +93,32 @@
 #define SHT2x_RES_11BIT_HUM_CONVERSION		15000					/* microseconds */
 #define SHT2x_RES_12BIT_HUM_CONVERSION		29000					/* microseconds */
 
-//device::Device *SHT2X_I2C_interface(int bus, int bus_frequency, int i2c_address);
-
-class SHT2X : public device::I2C, public I2CSPIDriver<SHT2X>
+class SHT2X : public I2CSPIDriver<SHT2X>
+//class SHT2X : public Airspeed, public I2CSPIDriver<SHT2X>
 {
+#if 0
 public:
-	SHT2X(I2CSPIBusOption bus_option, const int bus, int bus_frequency);
+	SHT2X(I2CSPIBusOption bus_option, const int bus, int bus_frequency, int address = SHT2X_SLAVE_ADDRESS,
+	      bool keep_retrying = false) :
+	    PX4Hum_Temp(bus, bus_frequency, address, CONVERSION_INTERVAL),
+		I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(get_device_id()), bus_option, bus, address),
+		_keep_retrying{keep_retrying}
+	{
+	}
+
+	virtual ~SHT2X() = default;
+#endif
+public:
+	SHT2X(I2CSPIBusOption bus_option, const int bus, device::Device *interface);
 	~SHT2X() override;
 
 	static I2CSPIDriverBase *instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
 					     int runtime_instance);
 	static void print_usage();
 
-	int	init() override;
-	int	probe() override;
+	void	RunImpl();
 
-#if 0
-	SHT2X(I2CSPIBusOption bus_option, const int bus, int bus_frequency, int address = SHT2X_SLAVE_ADDRESS,
-			bool keep_retrying = false) :
-		Airspeed(bus, bus_frequency, address, 100),
-		I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(get_device_id()), bus_option, bus, address),
-		_keep_retrying{keep_retrying}
-	{
-	}
-	virtual ~SHT2X() = default;
-
-	static I2CSPIDriverBase *instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
-					     int runtime_instance);
-
-	static void print_usage();
-#endif
-
-	/**
-	 * Diagnostics - print some basic information about the driver.
-	 */
-	void print_status() override;
-
-	/**
-	 * Perform a poll cycle; collect from the previous measurement
-	 * and start a new one.
-	 */
-	void RunImpl();
+	void start();
 
 private:
 	enum class State {
@@ -149,76 +129,15 @@ private:
 		humidity_collection
 	};
 
+	//int	measure() override { return 0; }
+	//int	collect() override;
+	int	probe();// override;
+	int	configure();
+	int	read_scale();
+
+	math::LowPassFilter2p _filter{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+
 	bool init_sht2x();
-	bool reset_sht2x();
-
-	math::LowPassFilter2p _filter_hum{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
-	math::LowPassFilter2p _filter_temp{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
-
-	//math::LowPassFilter2p	_filter_hum;
-	//math::LowPassFilter2p	_filter_temp;
-
-	//perf_counter_t _comms_errors{perf_alloc(PC_COUNT, MODULE_NAME": com_err")};
-	//perf_counter_t _sample_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": read")};
-
-	//uORB::PublicationMulti<sensor_hum_temp_s>	_hum_temp_pub{ORB_ID(sensor_hum_temp)};
-
-	//const bool _keep_retrying;
-
-	PX4Hum_Temp _px4_hum_temp;
-
-	perf_counter_t _sample_perf;
-	perf_counter_t _measure_perf;
-	perf_counter_t _comms_errors;
-
-	int					_temp_conversion_time{SHT2x_RES_14BIT_TEMP_CONVERSION};
-	int					_hum_conversion_time{SHT2x_RES_12BIT_HUM_CONVERSION};
-
-	float 				_relative_humidity{0};
-	float 				_temperature{0};
-
-	unsigned			_measurement_res{SHT2x_RES_12_14BIT};
-
-	State _state{State::configure};
-
-#if 0
-	bool init_sht2x();
-
-	/**
-	 * Calculate the CRC8 for the sensor payload data
-	 */
-	bool crc(const uint8_t data[], unsigned size, uint8_t checksum);
-
-	/**
-	 * Write a command in Sensirion specific logic
-	 */
-	int write_command(uint16_t command);
-
-	uint16_t _scale{0};
-	const bool _keep_retrying;
-	State _state{State::RequireConfig};
-#endif
-	/**
-	 * Initialize the automatic measurement state machine and start it.
-	 */
-	void start();
-
-	/**
-	 * Command set sensor configuration.
-	 *
-	 * @return		OK if the measurement command was successful.
-	 */
-	int				configure_sensor();
-
-	/**
-	 * Stop the automatic measurement state machine.
-	 */
-	void			stop();
-
-	/**
-	 * Reset the automatic measurement state machine.
-	 */
-	int 			reset_sensor();
 
 	/**
 	 * Issue a humidity measurement command for the current state.

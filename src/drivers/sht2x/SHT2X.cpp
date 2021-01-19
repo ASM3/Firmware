@@ -43,41 +43,6 @@
 
 using namespace time_literals;
 
-SHT2X::SHT2X(I2CSPIBusOption bus_option, const int bus, int bus_frequency) :
-	I2C(DRV_HUM_TEMP_DEVTYPE_SHT2X, MODULE_NAME, bus, SHT2X_SLAVE_ADDRESS, bus_frequency),
-	I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(get_device_id()), bus_option, bus),
-	_px4_hum_temp(get_device_id()),
-	_sample_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": read")),
-	_measure_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": measure")),
-	_comms_errors(perf_alloc(PC_COUNT, MODULE_NAME": com_err"))
-	//_temp_conversion_time(SHT2x_RES_14BIT_TEMP_CONVERSION),
-	//_hum_conversion_time(SHT2x_RES_12BIT_HUM_CONVERSION),
-	//_relative_humidity(0.0f),
-	//_temperature(0.0f)
-{
-}
-
-SHT2X::~SHT2X()
-{
-	perf_free(_sample_perf);
-	perf_free(_measure_perf);
-	perf_free(_comms_errors);
-}
-
-int SHT2X::init()
-{
-	int ret = I2C::init();
-
-	if (ret != PX4_OK) {
-		PX4_ERR("init failed");
-		return PX4_ERROR;
-	}
-
-	start();
-
-	return PX4_OK;
-}
-
 int
 SHT2X::probe()
 {
@@ -96,7 +61,15 @@ SHT2X::probe()
 	return require_initialization ? -1 : 0;
 
 }
-
+#if 0
+int SHT2X::write_command(uint16_t command)
+{
+	uint8_t cmd[2];
+	cmd[0] = static_cast<uint8_t>(command >> 8);
+	cmd[1] = static_cast<uint8_t>(command & 0xff);
+	return transfer(&cmd[0], 2, nullptr, 0);
+}
+#endif
 bool
 SHT2X::init_sht2x(){
 
@@ -111,68 +84,6 @@ SHT2X::reset_sht2x(){
 
 }
 
-#if 0
-int SHT2X::init()
-{
-	int ret = OK;
-
-	/* do I2C init (and probe) first */
-	ret = I2C::init();
-
-	/* if probe/setup failed, bail now */
-	if (ret != OK) {
-		DEVICE_DEBUG("I2C setup failed");
-		return ret;
-	}
-
-	/* allocate basic report buffers */
-	_reports = new ringbuffer::RingBuffer(2, sizeof(hum_temp_report));
-
-	if (_reports == nullptr) {
-		goto out;
-	}
-
-	/* do temperature measuremnt */
-	if (OK != temperature_measurement()) {
-		ret = -EIO;
-		return ret;
-	}
-
-	usleep(SHT2X_MAX_TEMP_CONVERSION);
-
-	if (OK != temperature_collection()) {
-		ret = -EIO;
-		return ret;
-	}
-
-	/* do humidity measurement */
-	if (OK != humidity_measurement()) {
-		ret = -EIO;
-		return ret;
-	}
-
-	usleep(SHT2X_MAX_HUM_CONVERSION);
-
-	if (OK != humidity_colection()) {
-		ret = -EIO;
-		return ret;
-	}
-
-	/* advertise sensor topic, measure manually to initialize valid report */
-	struct hum_temp_report prb;
-	_reports->get(&prb);
-
-	/* measurement will have generated a report, publish */
-	_hum_temp_topic = orb_advertise(ORB_ID(sensor_hum_temp), &prb);
-
-	if (_hum_temp_topic == nullptr) {
-		PX4_WARN("ADVERT FAIL");
-	}
-
-out:
-	return ret;
-}
-#endif
 int
 SHT2X::configure_sensor()
 {
@@ -187,6 +98,8 @@ SHT2X::configure_sensor()
 	}
 
 	_state = State::configure;
+
+	_device_id.devid_s.devtype = DRV_HUM_TEMP_DEVTYPE_SHT2X;
 
 	return ret;
 }
@@ -315,14 +228,13 @@ SHT2X::humidity_colection()
 		uint32_t w;
 	} cvt;
 
-	//sensor_hum_temp_s report{};
+	sensor_hum_temp_s report{};
 
 	/* read the most recent measurement */
 	perf_begin(_sample_perf);
 
 	/* this should be fairly close to the end of the conversion, so the best approximation of the time */
-	//report.timestamp = hrt_absolute_time();
-	const hrt_abstime timestamp_sample = hrt_absolute_time();
+	report.timestamp = hrt_absolute_time();
 
 	/* fetch the raw value */
 
@@ -350,7 +262,6 @@ SHT2X::humidity_colection()
 		_relative_humidity = -1000.0f;
 		return -EIO;
 	}
-#if 0
 	/* generate a new report */
 	if (!FILTERVALUES) {
 		report.relative_humidity = _relative_humidity;					    /* report in percent */
@@ -360,17 +271,10 @@ SHT2X::humidity_colection()
 		report.relative_humidity = _filter_hum.apply(_relative_humidity);	/* filtered report in percent */
 		report.ambient_temperature = _filter_temp.apply(_temperature);		/* filtered report in degc    */
 	}
-#endif
 
-	if (FILTERVALUES) {
-		_relative_humidity = _filter_hum.apply(_relative_humidity);	/* filtered report in percent */
-		_temperature = _filter_temp.apply(_temperature);			/* filtered report in degc    */
-	}
+	report.error_count = perf_event_count(_comms_errors);
 
-	//_hum_temp_pub.publish(report);
-	_px4_hum_temp.set_error_count(perf_event_count(_comms_errors));
-	//_px4_hum_temp.update(report.timestamp, report.relative_humidity, report.ambient_temperature);
-	_px4_hum_temp.update(timestamp_sample, _relative_humidity, _temperature);
+	_airspeed_pub.publish(report);
 
 	perf_end(_sample_perf);
 
