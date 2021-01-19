@@ -35,28 +35,7 @@
 #include <px4_platform_common/getopt.h>
 #include <px4_platform_common/module.h>
 
-#if 0
-I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
-				     int runtime_instance)
 
-{
-	SHT2X *instance = new SHT2X(iterator.configuredBusOption(), iterator.bus(), cli.bus_frequency, cli.i2c_address,
-				    cli.keep_running);
-
-	if (instance == nullptr) {
-		PX4_ERR("alloc failed");
-		return nullptr;
-	}
-
-	if (instance->init() != PX4_OK) {
-		delete instance;
-		return nullptr;
-	}
-
-	instance->start();
-	return instance;
-}
-#else
 void
 SHT2X::print_usage()
 {
@@ -65,7 +44,6 @@ SHT2X::print_usage()
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);
 	PRINT_MODULE_USAGE_PARAMS_I2C_ADDRESS(SHT2X_SLAVE_ADDRESS);
-	//PRINT_MODULE_USAGE_PARAMS_I2C_KEEP_RUNNING_FLAG();
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 }
 
@@ -85,12 +63,7 @@ I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstan
 
 	return dev;
 }
-#endif
 
-//extern "C" __EXPORT int sht2x_main(int argc, char *argv[])
-
-//int
-//sht2x_main(int argc, char *argv[])
 extern "C" int sht2x_main(int argc, char *argv[])
 {
 	using ThisDriver = SHT2X;

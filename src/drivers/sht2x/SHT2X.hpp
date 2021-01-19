@@ -40,17 +40,18 @@
 
 #pragma once
 
-//#include <drivers/drv_hum_temp.h>
 #include <math.h>
 #include <mathlib/math/filter/LowPassFilter2p.hpp>
-#include <px4_platform_common/getopt.h>
-#include <px4_platform_common/module.h>
-#include <px4_platform_common/i2c_spi_buses.h>
 #include <drivers/device/i2c.h>
+#include <drivers/drv_hrt.h>
 #include <lib/perf/perf_counter.h>
 #include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
-//#include <uORB/Subscription.hpp>
-//#include <uORB/PublicationMulti.hpp>
+#include <px4_platform_common/px4_config.h>
+#include <px4_platform_common/defines.h>
+#include <px4_platform_common/log.h>
+#include <px4_platform_common/i2c_spi_buses.h>
+//#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
+
 
 /* SHT2X internal constants and data structures.									*/
 
@@ -154,21 +155,11 @@ private:
 	math::LowPassFilter2p _filter_hum{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
 	math::LowPassFilter2p _filter_temp{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
 
-	unsigned			_measurement_res{SHT2x_RES_12_14BIT};
-
-	int					_temp_conversion_time{SHT2x_RES_14BIT_TEMP_CONVERSION};
-	int					_hum_conversion_time{SHT2x_RES_12BIT_HUM_CONVERSION};
-
-	float 				_relative_humidity{0};
-	float 				_temperature{0};
-
 	//math::LowPassFilter2p	_filter_hum;
 	//math::LowPassFilter2p	_filter_temp;
 
 	//perf_counter_t _comms_errors{perf_alloc(PC_COUNT, MODULE_NAME": com_err")};
 	//perf_counter_t _sample_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": read")};
-
-	State _state{State::configure};
 
 	//uORB::PublicationMulti<sensor_hum_temp_s>	_hum_temp_pub{ORB_ID(sensor_hum_temp)};
 
@@ -179,6 +170,16 @@ private:
 	perf_counter_t _sample_perf;
 	perf_counter_t _measure_perf;
 	perf_counter_t _comms_errors;
+
+	int					_temp_conversion_time{SHT2x_RES_14BIT_TEMP_CONVERSION};
+	int					_hum_conversion_time{SHT2x_RES_12BIT_HUM_CONVERSION};
+
+	float 				_relative_humidity{0};
+	float 				_temperature{0};
+
+	unsigned			_measurement_res{SHT2x_RES_12_14BIT};
+
+	State _state{State::configure};
 
 #if 0
 	bool init_sht2x();
