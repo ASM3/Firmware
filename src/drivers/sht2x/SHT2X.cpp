@@ -43,42 +43,33 @@
 
 using namespace time_literals;
 
+SHT2X::SHT2X(I2CSPIBusOption bus_option, int bus, device::Device *interface) :
+	I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(interface->get_device_id()), bus_option, bus,
+		     interface->get_device_address()),
+	 _px4_hum_temp(interface->get_device_id()),
+	_interface(interface),
+	_sample_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": read")),
+	_comms_errors(perf_alloc(PC_COUNT, MODULE_NAME": comm errors"))
+{
+}
+
+SHT2X::~SHT2X()
+{
+	perf_free(_sample_perf);
+	perf_free(_comms_errors);
+
+	delete _interface;
+}
+
 int
-SHT2X::probe()
-{
-
-	bool require_reset = !init_sht2x();
-
-	ScheduleDelayed(10_ms);
-
-	bool require_initialization = !init_sht2x();
-
-	if (require_reset && require_initialization) {
-		PX4_INFO("no sensor found, but will keep retrying");
-		return 0;
-	}
-
-	return require_initialization ? -1 : 0;
-
-}
-#if 0
-int SHT2X::write_command(uint16_t command)
-{
-	uint8_t cmd[2];
-	cmd[0] = static_cast<uint8_t>(command >> 8);
-	cmd[1] = static_cast<uint8_t>(command & 0xff);
-	return transfer(&cmd[0], 2, nullptr, 0);
-}
-#endif
-bool
-SHT2X::init_sht2x(){
+SHT2X::init(){
 
 	return configure_sensor() == 0;
 
 }
 
-bool
-SHT2X::reset_sht2x(){
+int
+SHT2X::reset(){
 
 	return reset_sensor() == 0;
 
@@ -87,6 +78,8 @@ SHT2X::reset_sht2x(){
 int
 SHT2X::configure_sensor()
 {
+	_measurement_res = SHT2x_RES_12_14BIT;				/// temp find other place for the init
+
 	/* send change resolution command */
 	int ret = res_change(_measurement_res);
 
@@ -99,7 +92,7 @@ SHT2X::configure_sensor()
 
 	_state = State::configure;
 
-	_device_id.devid_s.devtype = DRV_HUM_TEMP_DEVTYPE_SHT2X;
+	//_device_id.devid_s.devtype = DRV_HUM_TEMP_DEVTYPE_SHT2X;
 
 	return ret;
 }
@@ -212,7 +205,13 @@ SHT2X::humidity_measurement()
 {
 	uint8_t cmd = TRIG_RH_MEASUREMENT_POLL;							/* Trigger humidity measurement  */
 
-	if (OK != transfer(&cmd, 1, nullptr, 0)) {
+	//if (OK != transfer(&cmd, 1, nullptr, 0)) {
+	//	return -EIO;
+	//}
+
+	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
+		perf_count(_comms_errors);
+		perf_end(_sample_perf);
 		return -EIO;
 	}
 
@@ -238,7 +237,9 @@ SHT2X::humidity_colection()
 
 	/* fetch the raw value */
 
-	if (OK != transfer(nullptr, 0, &data[0], 3)) {
+	//if (OK != transfer(nullptr, 0, &data[0], 3)) {
+	if (OK != 	_interface->read(0, &data, 3))
+	{
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -274,7 +275,8 @@ SHT2X::humidity_colection()
 
 	report.error_count = perf_event_count(_comms_errors);
 
-	_airspeed_pub.publish(report);
+	_px4_hum_temp.update(report.timestamp, report.relative_humidity,report.ambient_temperature);
+
 
 	perf_end(_sample_perf);
 
@@ -286,7 +288,12 @@ SHT2X::temperature_measurement()
 {
 	uint8_t cmd = TRIG_T_MEASUREMENT_POLL;							  /* trigger temperature measurement */
 
-	if (OK != transfer(&cmd, 1, nullptr, 0)) {
+	//if (OK != transfer(&cmd, 1, nullptr, 0)) {
+	//	return -EIO;
+	//}
+	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
+		perf_count(_comms_errors);
+		perf_end(_sample_perf);
 		return -EIO;
 	}
 
@@ -306,7 +313,13 @@ SHT2X::temperature_collection()
 	perf_begin(_sample_perf);
 
 	/* fetch the raw value */
-	if (OK != transfer(nullptr, 0, &data[0], 3)) {
+	//if (OK != transfer(nullptr, 0, &data[0], 3)) {
+	//	perf_count(_comms_errors);
+	//	return -EIO;
+	//}
+
+	if (OK != _interface->read(0, &data, 3))
+	{
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -341,8 +354,8 @@ SHT2X::cmd_reset()
 	uint8_t		cmd = RESET_CMD;									/* trigger sensor reset */
 	int		result;
 
-	result = transfer(&cmd, 1, nullptr, 0);
-
+	//result = transfer(&cmd, 1, nullptr, 0);
+	result = _interface->write(cmd, nullptr, 1);
 	return result;
 }
 
@@ -353,7 +366,8 @@ SHT2X::res_change(uint8_t res)
 	uint8_t 	data[2];
 
 
-	if (OK != transfer(&cmd, 1, &data[0], 1)) {
+	//if (OK != transfer(&cmd, 1, &data[0], 1)) {
+	if (OK != _interface->read(cmd, &data, 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -363,7 +377,8 @@ SHT2X::res_change(uint8_t res)
 	data[1] = (data[0] | res);
 	data[0] = cmd;
 
-	if (OK != transfer(&data[0], 2, nullptr, 0)) {
+	//if (OK != transfer(&data[0], 2, nullptr, 0)) {
+	if (OK != _interface->write(cmd, data, 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -429,4 +444,12 @@ SHT2X::crc8(uint8_t *crc_data)
 	}
 
 	return (crc_read == crc);
+}
+
+void
+SHT2X::print_status()
+{
+	I2CSPIDriverBase::print_status();
+	perf_print_counter(_sample_perf);
+	perf_print_counter(_comms_errors);
 }

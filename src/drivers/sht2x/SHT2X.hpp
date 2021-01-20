@@ -40,11 +40,12 @@
 
 #pragma once
 
-#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
 #include <math.h>
 #include <mathlib/math/filter/LowPassFilter2p.hpp>
-#include <px4_platform_common/getopt.h>
-#include <px4_platform_common/module.h>
+#include <drivers/device/Device.hpp>
+#include <lib/drivers/hum_temp/PX4Hum_Temp.hpp>
+#include <lib/perf/perf_counter.h>
+#include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <px4_platform_common/i2c_spi_buses.h>
 
 
@@ -110,15 +111,17 @@ public:
 #endif
 public:
 	SHT2X(I2CSPIBusOption bus_option, const int bus, device::Device *interface);
-	~SHT2X() override;
+	virtual ~SHT2X();
 
 	static I2CSPIDriverBase *instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
 					     int runtime_instance);
 	static void print_usage();
 
-	void	RunImpl();
+	int			init();
 
-	void start();
+	void			print_status();
+
+	void	RunImpl();
 
 private:
 	enum class State {
@@ -131,13 +134,41 @@ private:
 
 	//int	measure() override { return 0; }
 	//int	collect() override;
-	int	probe();// override;
-	int	configure();
-	int	read_scale();
+	void start();
+	int			reset();
 
-	math::LowPassFilter2p _filter{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	PX4Hum_Temp		_px4_hum_temp;
 
-	bool init_sht2x();
+	device::Device		*_interface;
+
+	perf_counter_t		_sample_perf;
+	perf_counter_t		_comms_errors;
+
+	int 				_measurement_res;
+	State 				_state;
+
+	int 				_temp_conversion_time;
+	int 				_hum_conversion_time;
+
+	float 				_relative_humidity;
+	float 				_temperature;
+
+	math::LowPassFilter2p _filter_hum{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p _filter_temp{SHT2X_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+
+	/**
+	 * Perform SHT2X sensor configuration.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int				configure_sensor();
+
+	/**
+	 * Perform SHT2X sensor reset.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int				reset_sensor();
 
 	/**
 	 * Issue a humidity measurement command for the current state.

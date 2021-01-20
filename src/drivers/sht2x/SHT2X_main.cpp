@@ -32,36 +32,36 @@
  ****************************************************************************/
 
 #include "SHT2X.hpp"
-#if 0
-extern "C" __EXPORT int sht2x_main(int argc, char *argv[]);
 
-I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
-				     int runtime_instance)
+namespace sht2x
 {
-	SHT2X *instance = new SHT2X(iterator.configuredBusOption(), iterator.bus(), cli.bus_frequency, cli.i2c_address,
-				    cli.keep_running);
-
-	if (instance == nullptr) {
-		PX4_ERR("alloc failed");
-		return nullptr;
-	}
-
-	if (instance->init() != PX4_OK) {
-		delete instance;
-		return nullptr;
-	}
-
-	instance->start();
-	return instance;
+extern device::Device *SHT2X_I2C_interface(uint8_t bus, uint32_t device, int bus_frequency);
 }
-#endif
+
+#include <px4_platform_common/getopt.h>
+#include <px4_platform_common/module.h>
+
+using namespace sht2x;
+
+void
+SHT2X::print_usage()
+{
+	PRINT_MODULE_USAGE_NAME("sht2x_airspeed", "driver");
+	PRINT_MODULE_USAGE_SUBCATEGORY("sensor_hum_temp");
+	PRINT_MODULE_USAGE_COMMAND("start");
+	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);
+	PRINT_MODULE_USAGE_PARAMS_I2C_ADDRESS(SHT2X_SLAVE_ADDRESS);
+	PRINT_MODULE_USAGE_PARAMS_I2C_KEEP_RUNNING_FLAG();
+	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
+}
+
 I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
 				      int runtime_instance)
 {
 	device::Device *interface = nullptr;
 
 	if (iterator.busType() == BOARD_I2C_BUS) {
-		interface = SHT2X_I2C_interface(iterator.bus(), cli.bus_frequency);
+		interface = SHT2X_I2C_interface(iterator.bus(), iterator.devid(), cli.bus_frequency);
 	}
 
 	if (interface == nullptr) {
@@ -90,25 +90,12 @@ I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstan
 	return dev;
 }
 
-void
-SHT2X::print_usage()
-{
-	PRINT_MODULE_USAGE_NAME("sht2x_airspeed", "driver");
-	PRINT_MODULE_USAGE_SUBCATEGORY("sensor_hum_temp");
-	PRINT_MODULE_USAGE_COMMAND("start");
-	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);
-	PRINT_MODULE_USAGE_PARAMS_I2C_ADDRESS(SHT2X_SLAVE_ADDRESS);
-	PRINT_MODULE_USAGE_PARAMS_I2C_KEEP_RUNNING_FLAG();
-	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
-}
-
-int
-sht2x_main(int argc, char *argv[])
+extern "C" int sht2x_main(int argc, char *argv[])
 {
 	using ThisDriver = SHT2X;
 	BusCLIArguments cli{true, false};
+	cli.i2c_address = SHT2X_SLAVE_ADDRESS;
 	cli.default_i2c_frequency = SHT2X_BUS_SPEED;
-	cli.i2c_address = I2C_ADDRESS_1_SHT2X;
 	cli.support_keep_running = true;
 
 	const char *verb = cli.parseDefaultArguments(argc, argv);
