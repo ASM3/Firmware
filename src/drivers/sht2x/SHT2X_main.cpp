@@ -46,7 +46,7 @@ using namespace sht2x;
 void
 SHT2X::print_usage()
 {
-	PRINT_MODULE_USAGE_NAME("sht2x_airspeed", "driver");
+	PRINT_MODULE_USAGE_NAME("sht2x", "driver");
 	PRINT_MODULE_USAGE_SUBCATEGORY("sensor_hum_temp");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);

@@ -95,20 +95,7 @@
 #define SHT2x_RES_12BIT_HUM_CONVERSION		29000					/* microseconds */
 
 class SHT2X : public I2CSPIDriver<SHT2X>
-//class SHT2X : public Airspeed, public I2CSPIDriver<SHT2X>
 {
-#if 0
-public:
-	SHT2X(I2CSPIBusOption bus_option, const int bus, int bus_frequency, int address = SHT2X_SLAVE_ADDRESS,
-	      bool keep_retrying = false) :
-	    PX4Hum_Temp(bus, bus_frequency, address, CONVERSION_INTERVAL),
-		I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(get_device_id()), bus_option, bus, address),
-		_keep_retrying{keep_retrying}
-	{
-	}
-
-	virtual ~SHT2X() = default;
-#endif
 public:
 	SHT2X(I2CSPIBusOption bus_option, const int bus, device::Device *interface);
 	virtual ~SHT2X();
@@ -119,9 +106,9 @@ public:
 
 	int			init();
 
-	void			print_status();
+	void		print_status();
 
-	void	RunImpl();
+	void		RunImpl();
 
 private:
 	enum class State {
@@ -132,12 +119,10 @@ private:
 		humidity_collection
 	};
 
-	//int	measure() override { return 0; }
-	//int	collect() override;
 	void start();
 	int			reset();
 
-	PX4Hum_Temp		_px4_hum_temp;
+	PX4Hum_Temp			_px4_hum_temp;
 
 	device::Device		*_interface;
 

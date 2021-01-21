@@ -85,14 +85,11 @@ SHT2X::configure_sensor()
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
-		//DEVICE_DEBUG("config failed");
 		_state = State::configure;
 		return ret;
 	}
 
 	_state = State::configure;
-
-	//_device_id.devid_s.devtype = DRV_HUM_TEMP_DEVTYPE_SHT2X;
 
 	return ret;
 }
@@ -104,7 +101,6 @@ int SHT2X::reset_sensor()
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
-		//DEVICE_DEBUG("reset failed");
 		return ret;
 	}
 
@@ -205,10 +201,6 @@ SHT2X::humidity_measurement()
 {
 	uint8_t cmd = TRIG_RH_MEASUREMENT_POLL;							/* Trigger humidity measurement  */
 
-	//if (OK != transfer(&cmd, 1, nullptr, 0)) {
-	//	return -EIO;
-	//}
-
 	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
 		perf_count(_comms_errors);
 		perf_end(_sample_perf);
@@ -237,7 +229,6 @@ SHT2X::humidity_colection()
 
 	/* fetch the raw value */
 
-	//if (OK != transfer(nullptr, 0, &data[0], 3)) {
 	if (OK != 	_interface->read(0, &data, 3))
 	{
 		perf_count(_comms_errors);
@@ -288,9 +279,6 @@ SHT2X::temperature_measurement()
 {
 	uint8_t cmd = TRIG_T_MEASUREMENT_POLL;							  /* trigger temperature measurement */
 
-	//if (OK != transfer(&cmd, 1, nullptr, 0)) {
-	//	return -EIO;
-	//}
 	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
 		perf_count(_comms_errors);
 		perf_end(_sample_perf);
@@ -313,11 +301,6 @@ SHT2X::temperature_collection()
 	perf_begin(_sample_perf);
 
 	/* fetch the raw value */
-	//if (OK != transfer(nullptr, 0, &data[0], 3)) {
-	//	perf_count(_comms_errors);
-	//	return -EIO;
-	//}
-
 	if (OK != _interface->read(0, &data, 3))
 	{
 		perf_count(_comms_errors);
@@ -354,7 +337,6 @@ SHT2X::cmd_reset()
 	uint8_t		cmd = RESET_CMD;									/* trigger sensor reset */
 	int		result;
 
-	//result = transfer(&cmd, 1, nullptr, 0);
 	result = _interface->write(cmd, nullptr, 1);
 	return result;
 }
@@ -365,8 +347,6 @@ SHT2X::res_change(uint8_t res)
 	uint8_t		cmd = USER_REG_R;
 	uint8_t 	data[2];
 
-
-	//if (OK != transfer(&cmd, 1, &data[0], 1)) {
 	if (OK != _interface->read(cmd, &data, 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -377,7 +357,6 @@ SHT2X::res_change(uint8_t res)
 	data[1] = (data[0] | res);
 	data[0] = cmd;
 
-	//if (OK != transfer(&data[0], 2, nullptr, 0)) {
 	if (OK != _interface->write(cmd, data, 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
