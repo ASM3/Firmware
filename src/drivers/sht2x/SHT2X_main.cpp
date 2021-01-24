@@ -61,7 +61,7 @@ I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstan
 	device::Device *interface = nullptr;
 
 	if (iterator.busType() == BOARD_I2C_BUS) {
-		interface = SHT2X_I2C_interface(iterator.bus(), iterator.devid(), cli.bus_frequency);
+		interface = SHT2X_I2C_interface(iterator.bus(), cli.i2c_address, cli.bus_frequency);
 	}
 
 	if (interface == nullptr) {

@@ -64,14 +64,21 @@ SHT2X::~SHT2X()
 int
 SHT2X::init(){
 
-	return configure_sensor() == 0;
+	if (reset_sensor() != OK) {
+		PX4_DEBUG("reset failed");
+		return PX4_ERROR;
+	}
 
+	start();
+
+	return PX4_OK;
 }
 
 int
 SHT2X::reset(){
 
-	return reset_sensor() == 0;
+	//////////////////return reset_sensor();
+	return OK;
 
 }
 
@@ -89,7 +96,7 @@ SHT2X::configure_sensor()
 		return ret;
 	}
 
-	_state = State::configure;
+	_state = State::temperature_measurement;
 
 	return ret;
 }
@@ -113,7 +120,11 @@ void
 SHT2X::start()
 {
 	// make sure to wait 10ms after configuring the measurement mode
-	ScheduleDelayed(10_ms);
+	//////ScheduleDelayed(10_ms);
+
+	// run at twice the sample rate to capture all new data
+	ScheduleOnInterval(1000000 / SHT2X_MEAS_RATE / 2);
+
 }
 
 void
@@ -201,7 +212,7 @@ SHT2X::humidity_measurement()
 {
 	uint8_t cmd = TRIG_RH_MEASUREMENT_POLL;							/* Trigger humidity measurement  */
 
-	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
+	if (_interface->write((uint8_t)cmd, nullptr, 0) != PX4_OK) {
 		perf_count(_comms_errors);
 		perf_end(_sample_perf);
 		return -EIO;
@@ -229,7 +240,7 @@ SHT2X::humidity_colection()
 
 	/* fetch the raw value */
 
-	if (OK != 	_interface->read(0, &data, 3))
+	if (OK != 	_interface->read((uint8_t)NULL, &data, 3))
 	{
 		perf_count(_comms_errors);
 		return -EIO;
@@ -268,6 +279,7 @@ SHT2X::humidity_colection()
 
 	_px4_hum_temp.update(report.timestamp, report.relative_humidity,report.ambient_temperature);
 
+	///////////////PX4_INFO("SHT2X: humidity value is: %3.6f", (double) _relative_humidity);
 
 	perf_end(_sample_perf);
 
@@ -279,7 +291,7 @@ SHT2X::temperature_measurement()
 {
 	uint8_t cmd = TRIG_T_MEASUREMENT_POLL;							  /* trigger temperature measurement */
 
-	if (_interface->write(cmd, nullptr, 1) != PX4_OK) {
+	if (_interface->write((uint8_t)cmd, nullptr, 0) != PX4_OK) {
 		perf_count(_comms_errors);
 		perf_end(_sample_perf);
 		return -EIO;
@@ -301,7 +313,8 @@ SHT2X::temperature_collection()
 	perf_begin(_sample_perf);
 
 	/* fetch the raw value */
-	if (OK != _interface->read(0, &data, 3))
+	//int dummy = nullptr;
+	if (OK != _interface->read((uint8_t)NULL, &data, 3))
 	{
 		perf_count(_comms_errors);
 		return -EIO;
@@ -326,6 +339,7 @@ SHT2X::temperature_collection()
 		return -EIO;
 	}
 
+	///////////////////PX4_INFO("SHT2X: Temperature is: %3.2f C", (double) _temperature);
 	perf_end(_sample_perf);
 
 	return OK;
@@ -337,7 +351,11 @@ SHT2X::cmd_reset()
 	uint8_t		cmd = RESET_CMD;									/* trigger sensor reset */
 	int		result;
 
-	result = _interface->write(cmd, nullptr, 1);
+	result = _interface->write((uint8_t)cmd, nullptr, 0);
+
+	// make sure to wait 10ms after configuring the measurement mode
+	ScheduleDelayed(15_ms);
+
 	return result;
 }
 
@@ -345,19 +363,20 @@ int
 SHT2X::res_change(uint8_t res)
 {
 	uint8_t		cmd = USER_REG_R;
-	uint8_t 	data[2];
+	//uint8_t 	data[2];
+	uint8_t 	data[1];
 
-	if (OK != _interface->read(cmd, &data, 2)) {
+	if (OK != _interface->read((uint8_t)cmd, &data, 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
 
 	cmd 	= USER_REG_W;
 
-	data[1] = (data[0] | res);
-	data[0] = cmd;
+	data[0] = (data[0] | res);
+	//data[0] = cmd;
 
-	if (OK != _interface->write(cmd, data, 2)) {
+	if (OK != _interface->write((uint8_t)cmd, data, 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}

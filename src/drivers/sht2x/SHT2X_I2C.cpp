@@ -52,7 +52,6 @@ public:
 
 	virtual int	read(unsigned address, void *data, unsigned count);
 	virtual int	write(unsigned address, void *data, unsigned count);
-
 };
 
 device::Device *
@@ -70,7 +69,13 @@ int
 SHT2X_I2C::read(unsigned address, void *data, unsigned count)
 {
 	uint8_t cmd = address;
-	return transfer(&cmd, 1, (uint8_t *)data, count);
+	uint8_t cmd_size = 1;
+
+	if (cmd == NULL){
+		cmd_size =0;
+	}
+
+	return transfer(&cmd, cmd_size, (uint8_t *)data, count);
 }
 
 int
@@ -87,5 +92,4 @@ SHT2X_I2C::write(unsigned address, void *data, unsigned count)
 
 	return transfer(&buf[0], count + 1, nullptr, 0);
 }
-
 } // namespace sht2x

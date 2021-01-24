@@ -34,7 +34,7 @@ px4_add_module(
 	MODULE drivers__sht2x
 	MAIN sht2x
 	COMPILE_FLAGS
-	#	-O0
+		-O0
 	SRCS
 		SHT2X.hpp
 		SHT2X.cpp
