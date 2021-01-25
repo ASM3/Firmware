@@ -148,7 +148,7 @@ then
 fi
 
 # SHT2x sensor
-if sht2x -X start
+if sht2x -X -b 4 start
 then
 else
 	tune_control play -m ${TUNE_ERR}
