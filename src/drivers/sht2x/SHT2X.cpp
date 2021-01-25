@@ -77,8 +77,7 @@ SHT2X::init(){
 int
 SHT2X::reset(){
 
-	//////////////////return reset_sensor();
-	return OK;
+	return reset_sensor();
 
 }
 
@@ -92,7 +91,8 @@ SHT2X::configure_sensor()
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
-		_state = State::configure;
+		///_state = State::configure;
+		init();
 		return ret;
 	}
 
@@ -165,6 +165,7 @@ SHT2X::RunImpl()
 
 			/* next phase is humidity measurement */
 			_state = State::humidity_measurement;
+			ScheduleDelayed(10_ms);
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
@@ -279,7 +280,7 @@ SHT2X::humidity_colection()
 
 	_px4_hum_temp.update(report.timestamp, report.relative_humidity,report.ambient_temperature);
 
-	///////////////PX4_INFO("SHT2X: humidity value is: %3.6f", (double) _relative_humidity);
+	PX4_INFO("SHT2X: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
 
 	perf_end(_sample_perf);
 
@@ -339,7 +340,6 @@ SHT2X::temperature_collection()
 		return -EIO;
 	}
 
-	///////////////////PX4_INFO("SHT2X: Temperature is: %3.2f C", (double) _temperature);
 	perf_end(_sample_perf);
 
 	return OK;
