@@ -64,6 +64,8 @@ SHT2X::~SHT2X()
 int
 SHT2X::init(){
 
+	reset_sensor(); /* dummy I2C command */
+
 	if (reset_sensor() != OK) {
 		PX4_DEBUG("reset failed");
 		return PX4_ERROR;
@@ -78,20 +80,19 @@ int
 SHT2X::reset(){
 
 	return reset_sensor();
-
 }
 
 int
 SHT2X::configure_sensor()
 {
-	_measurement_res = SHT2x_RES_12_14BIT;				/// temp find other place for the init
+	_measurement_res = SHT2x_RES_12_14BIT;				// ToDo: proper allocation
 
 	/* send change resolution command */
 	int ret = res_change(_measurement_res);
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
-		///_state = State::configure;
+		_state = State::configure;
 		init();
 		return ret;
 	}
@@ -117,14 +118,11 @@ int SHT2X::reset_sensor()
 }
 
 void
+
 SHT2X::start()
 {
-	// make sure to wait 10ms after configuring the measurement mode
-	//////ScheduleDelayed(10_ms);
-
-	// run at twice the sample rate to capture all new data
+	/* run at twice the sample rate to capture all new data */
 	ScheduleOnInterval(1000000 / SHT2X_MEAS_RATE / 2);
-
 }
 
 void
@@ -314,7 +312,6 @@ SHT2X::temperature_collection()
 	perf_begin(_sample_perf);
 
 	/* fetch the raw value */
-	//int dummy = nullptr;
 	if (OK != _interface->read((uint8_t)NULL, &data, 3))
 	{
 		perf_count(_comms_errors);
@@ -363,7 +360,6 @@ int
 SHT2X::res_change(uint8_t res)
 {
 	uint8_t		cmd = USER_REG_R;
-	//uint8_t 	data[2];
 	uint8_t 	data[1];
 
 	if (OK != _interface->read((uint8_t)cmd, &data, 1)) {
@@ -374,7 +370,6 @@ SHT2X::res_change(uint8_t res)
 	cmd 	= USER_REG_W;
 
 	data[0] = (data[0] | res);
-	//data[0] = cmd;
 
 	if (OK != _interface->write((uint8_t)cmd, data, 1)) {
 		perf_count(_comms_errors);
