@@ -237,6 +237,8 @@ SHT2X::humidity_colection()
 	/* this should be fairly close to the end of the conversion, so the best approximation of the time */
 	report.timestamp = hrt_absolute_time();
 
+	const hrt_abstime timestamp_sample = hrt_absolute_time();
+
 	/* fetch the raw value */
 
 	if (OK != 	_interface->read((uint8_t)NULL, &data, 3))
@@ -274,11 +276,10 @@ SHT2X::humidity_colection()
 		report.ambient_temperature = _filter_temp.apply(_temperature);		/* filtered report in degc    */
 	}
 
-	report.error_count = perf_event_count(_comms_errors);
+	_px4_hum_temp.set_error_count(perf_event_count(_comms_errors));
+	_px4_hum_temp.update(timestamp_sample, (float) report.relative_humidity, (float) report.ambient_temperature);
 
-	_px4_hum_temp.update(report.timestamp, report.relative_humidity,report.ambient_temperature);
-
-	PX4_INFO("SHT2X: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
+	//PX4_INFO("SHT2X: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
 
 	perf_end(_sample_perf);
 
@@ -350,7 +351,7 @@ SHT2X::cmd_reset()
 
 	result = _interface->write((uint8_t)cmd, nullptr, 0);
 
-	// make sure to wait 10ms after configuring the measurement mode
+	// make sure to wait 15ms after configuring the measurement mode
 	ScheduleDelayed(15_ms);
 
 	return result;
