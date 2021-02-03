@@ -125,6 +125,7 @@ set(msg_files
 	sensor_mag.msg
 	sensor_preflight_mag.msg
 	sensor_selection.msg
+	sensor_voliro_pb.msg
 	sensors_status_imu.msg
 	system_power.msg
 	task_stack_info.msg
