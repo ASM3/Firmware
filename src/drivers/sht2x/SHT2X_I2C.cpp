@@ -71,8 +71,8 @@ SHT2X_I2C::read(unsigned address, void *data, unsigned count)
 	uint8_t cmd = address;
 	uint8_t cmd_size = 1;
 
-	if (cmd == NULL){
-		cmd_size =0;
+	if (cmd == NULL) {
+		cmd_size = 0;
 	}
 
 	return transfer(&cmd, cmd_size, (uint8_t *)data, count);

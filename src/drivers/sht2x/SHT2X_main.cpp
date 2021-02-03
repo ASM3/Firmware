@@ -56,7 +56,7 @@ SHT2X::print_usage()
 }
 
 I2CSPIDriverBase *SHT2X::instantiate(const BusCLIArguments &cli, const BusInstanceIterator &iterator,
-				      int runtime_instance)
+				     int runtime_instance)
 {
 	device::Device *interface = nullptr;
 

@@ -46,7 +46,7 @@ using namespace time_literals;
 SHT2X::SHT2X(I2CSPIBusOption bus_option, int bus, device::Device *interface) :
 	I2CSPIDriver(MODULE_NAME, px4::device_bus_to_wq(interface->get_device_id()), bus_option, bus,
 		     interface->get_device_address()),
-	 _px4_hum_temp(interface->get_device_id()),
+	_px4_hum_temp(interface->get_device_id()),
 	_interface(interface),
 	_sample_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": read")),
 	_comms_errors(perf_alloc(PC_COUNT, MODULE_NAME": comm errors"))
@@ -62,7 +62,8 @@ SHT2X::~SHT2X()
 }
 
 int
-SHT2X::init(){
+SHT2X::init()
+{
 
 	reset_sensor(); /* dummy I2C command */
 
@@ -77,7 +78,8 @@ SHT2X::init(){
 }
 
 int
-SHT2X::reset(){
+SHT2X::reset()
+{
 
 	return reset_sensor();
 }
@@ -132,9 +134,11 @@ SHT2X::RunImpl()
 	switch (_state) {
 
 	case State::configure:
+
 		/* sensor configure phase */
 		if (configure_sensor() == PX4_OK) {
 			ScheduleDelayed(10_ms);
+
 		} else {
 			/* periodically retry to configure */
 			ScheduleDelayed(300_ms);
@@ -143,12 +147,14 @@ SHT2X::RunImpl()
 		break;
 
 	case State::temperature_measurement:
+
 		/* temperature measurement phase */
 		if (temperature_measurement() == PX4_OK) {
 
 			/* next phase is temperate collection */
 			_state = State::temperature_collection;
 			ScheduleDelayed(_temp_conversion_time);
+
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
@@ -164,6 +170,7 @@ SHT2X::RunImpl()
 			/* next phase is humidity measurement */
 			_state = State::humidity_measurement;
 			ScheduleDelayed(10_ms);
+
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
@@ -172,12 +179,14 @@ SHT2X::RunImpl()
 		break;
 
 	case State::humidity_measurement:
+
 		/* humidity measurement phase */
 		if (humidity_measurement() == PX4_OK) {
 
 			/* next phase is humidity collection */
 			_state = State::humidity_collection;
 			ScheduleDelayed(_hum_conversion_time);
+
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
@@ -186,17 +195,20 @@ SHT2X::RunImpl()
 		break;
 
 	case State::humidity_collection:
+
 		/* humidity collection phase */
 		if (humidity_colection() == PX4_OK) {
 
 			/* next phase is temperature measurement */
 			_state = State::temperature_measurement;
+
 			if (SHT2X_CONVERSION_INTERVAL - _temp_conversion_time - _hum_conversion_time < 0) {
 				ScheduleDelayed(SHT2X_CONVERSION_INTERVAL);
-			}
-			else{
+
+			} else {
 				ScheduleDelayed(SHT2X_CONVERSION_INTERVAL - _temp_conversion_time - _hum_conversion_time);
 			}
+
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
@@ -241,8 +253,7 @@ SHT2X::humidity_colection()
 
 	/* fetch the raw value */
 
-	if (OK != 	_interface->read((uint8_t)NULL, &data, 3))
-	{
+	if (OK != 	_interface->read((uint8_t)NULL, &data, 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -266,6 +277,7 @@ SHT2X::humidity_colection()
 		_relative_humidity = -1000.0f;
 		return -EIO;
 	}
+
 	/* generate a new report */
 	if (!FILTERVALUES) {
 		report.relative_humidity = _relative_humidity;					    /* report in percent */
@@ -313,8 +325,7 @@ SHT2X::temperature_collection()
 	perf_begin(_sample_perf);
 
 	/* fetch the raw value */
-	if (OK != _interface->read((uint8_t)NULL, &data, 3))
-	{
+	if (OK != _interface->read((uint8_t)NULL, &data, 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
