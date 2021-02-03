@@ -15,6 +15,6 @@ px4_add_module(
 		VOLIRO_PB_I2C.cpp
 		VOLIRO_PB_main.cpp
 	DEPENDS
-		drivers_hum_temp
+		drivers_voliro_pb
 		px4_work_queue
 	)
