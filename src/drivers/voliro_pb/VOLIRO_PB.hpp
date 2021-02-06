@@ -31,16 +31,14 @@
 #define LED_POW_3_REG			0x04	/* Pointer to the address of the led power register of channel 3  		*/
 #define LED_POW_4_REG			0x05	/* Pointer to the address of the led power register of channel 4  		*/
 #define BRD_STATS_REG			0x06	/* Pointer to the address of the board status register 					*/
-#define DIGITAL_CURRENT_REG		0x07	/* Pointer to the address of board digital current register				*/
-#define ANALOG_CURRENT_REG		0x09	/* Pointer to the address of board analog current register				*/
-#define EXT_CURRENT_REG			0x0b	/* Pointer to the address of board EXT current register					*/
-#define DIGITAL_VOLTAGE_REG		0x0d	/* Pointer to the address of board digital voltage register				*/
-#define MOT_L_CURRENT_REG		0x0f	/* Pointer to the address of board current register of motor channel    */
-#define AUX_CURRENT_REG			0x11	/* Pointer to the address of board AUX current register					*/
-#define SYSTEM_VOLT_REG			0x13	/* Pointer to the address of board system voltage register			  	*/
-#define SERVO_VOLT_REG			0x15	/* Pointer to the address of board servo voltage register			  	*/
-
-#define MOT_R_CURRENT_REG		0x0b	/* Pointer to the address of board current register of motor channel R  */
+#define SYSTEM_VOLT_REG			0x07	/* Pointer to the address of board system voltage register			  	*/
+#define SYSTEM_CURRENT_REG		0x09	/* Pointer to the address of board system current register				*/
+#define BAT_VOLT_REG			0x0b	/* Pointer to the address of board battery voltage register			  	*/
+#define BAT_CURRENT_REG			0x0d	/* Pointer to the address of board battery current register			  	*/
+#define DIGITAL_5V_CURRENT_REG	0x0f	/* Pointer to the address of board 5v digital current register			*/
+#define ANALOG_5V_CURRENT_REG	0x11	/* Pointer to the address of board 5v analog current register			*/
+#define DIGITAL_12V_CURRENT_REG	0x13	/* Pointer to the address of board 12v digital current register			*/
+#define ANALOG_12V_CURRENT_REG	0x15	/* Pointer to the address of board 12v analog current register			*/
 
 #define LED_REMOTE_MODE_BIT     0x4		/* LED remote mode bit on the status register		   					*/
 
@@ -134,7 +132,42 @@ private:
 	unsigned _pwr_brd_led_power_4;
 
 	math::LowPassFilter2p _filter_v{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
-	math::LowPassFilter2p _filter_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	//math::LowPassFilter2p _filter_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+
+	/**
+	 * Perform power board configuration.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			configure_sensor();
+
+	/**
+	 * Perform power board reset.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			reset_sensor();
+
+	/**
+	 * Print power board calibration parameters.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			print_info();
+
+	/**
+	 * Issue a sensor data burst collection command.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			burst_colection();
+
+	/**
+	 * Issue a sensor self test command.
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			self_test();
 
 	/**
 	 * Get power board registers values

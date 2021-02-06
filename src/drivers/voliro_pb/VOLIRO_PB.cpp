@@ -103,7 +103,6 @@ VOLIRO_PB::start()
 void
 VOLIRO_PB::RunImpl()
 {
-
 	switch (_state) {
 
 	case State::configure:
@@ -112,6 +111,9 @@ VOLIRO_PB::RunImpl()
 		if (configure_sensor() == PX4_OK) {
 			ScheduleDelayed(10_ms);
 
+			/* next phase is burst collection measurement */
+			_state = State::burst_collection;
+
 		} else {
 			/* periodically retry to configure */
 			ScheduleDelayed(300_ms);
@@ -119,38 +121,15 @@ VOLIRO_PB::RunImpl()
 
 		break;
 
-
-	case State::v_collection:
+	case State::burst_collection:
 
 		/* temperature collection phase */
-		if (temperature_collection() == PX4_OK) {
+		if (burst_collection() == PX4_OK) {
 
 			/* next phase is humidity measurement */
-			_state = State::humidity_measurement;
-			ScheduleDelayed(10_ms);
+			_state = State::burst_collection;
 
-		} else {
-			/* try to reconfigure */
-			_state = State::configure;
-		}
-
-		break;
-
-
-	case State::i_collection:
-
-		/* humidity collection phase */
-		if (humidity_colection() == PX4_OK) {
-
-			/* next phase is temperature measurement */
-			_state = State::temperature_measurement;
-
-			if (VOLIRO_PB_CONVERSION_INTERVAL - _temp_conversion_time - _hum_conversion_time < 0) {
-				ScheduleDelayed(VOLIRO_PB_CONVERSION_INTERVAL);
-
-			} else {
-				ScheduleDelayed(VOLIRO_PB_CONVERSION_INTERVAL - _temp_conversion_time - _hum_conversion_time);
-			}
+			ScheduleDelayed(VOLIRO_PB_CONVERSION_INTERVAL);
 
 		} else {
 			/* try to reconfigure */
@@ -162,7 +141,7 @@ VOLIRO_PB::RunImpl()
 }
 
 int
-VOLIRO_PB::v_colection()
+VOLIRO_PB::burst_colection()
 {
 
 	sensor_voliro_pb_s report{};
@@ -186,16 +165,16 @@ VOLIRO_PB::v_colection()
 	uint8_t	pwr_brd_led_4_pwr = 0;
 
 	float pwr_brd_system_v = 0.0f;
-	float pwr_brd_servo_v  = 0.0f;
-	float pwr_brd_digital_v  = 0.0f;
+	float pwr_brd_system_i = 0.0f;
 
-	float pwr_brd_mot_l = 0.0f;
-	float pwr_brd_mot_r = 0.0f;
+	float pwr_brd_bat_v = 0.0f;
+	float pwr_brd_bat_i = 0.0f;
 
-	float pwr_brd_analog   = 0.0f;
-	float pwr_brd_ext      = 0.0f;
-	float pwr_brd_digital = 0.0f;
-	float pwr_brd_aux      = 0.0f;
+	float pwr_5v_digital_i  = 0.0f;
+	float pwr_5v_analog_i  = 0.0f;
+
+	float pwr_12v_digital_i  = 0.0f;
+	float pwr_12v_analog_i  = 0.0f;
 
 	/* read the most recent measurement */
 	perf_begin(_sample_perf);
@@ -232,41 +211,35 @@ VOLIRO_PB::v_colection()
 		return -EIO;
 	}
 
-	if (OK != get_voltage(SERVO_VOLT_REG, &pwr_brd_servo_v)) {
+	if (OK != get_channel_current(SYSTEM_CURRENT_REG, &pwr_brd_system_i)) {
 		return -EIO;
 	}
 
-	if (OK != get_voltage(DIGITAL_VOLTAGE_REG, &pwr_brd_digital_v)) {
+	if (OK != get_voltage(BAT_VOLT_REG, &pwr_brd_bat_v)) {
 		return -EIO;
 	}
 
-	if (OK != get_channel_current(DIGITAL_CURRENT_REG, &pwr_brd_digital)) {
+	if (OK != get_channel_current(BAT_CURRENT_REG, &pwr_brd_bat_i)) {
 		return -EIO;
 	}
 
-	if (OK != get_channel_current(ANALOG_CURRENT_REG, &pwr_brd_analog)) {
+	if (OK != get_channel_current(DIGITAL_5V_CURRENT_REG, &pwr_5v_digital_i)) {
 		return -EIO;
 	}
 
-	if (OK != get_channel_current(AUX_CURRENT_REG, &pwr_brd_aux)) {
+	if (OK != get_channel_current(ANALOG_5V_CURRENT_REG, &pwr_5v_analog_i)) {
 		return -EIO;
 	}
 
-	if (OK != get_motor_current(MOT_L_CURRENT_REG, &pwr_brd_mot_l)) {
+	if (OK != get_channel_current(DIGITAL_12V_CURRENT_REG, &pwr_12v_digital_i)) {
 		return -EIO;
 	}
 
-	if (ENA_MOT_R) {
-		if (OK != get_motor_current(MOT_R_CURRENT_REG, &pwr_brd_mot_r)) {
-			return -EIO;
-		}
-
-	} else {
-		if (OK != get_motor_current(EXT_CURRENT_REG, &pwr_brd_ext)) {
-			return -EIO;
-		}
+	if (OK != get_channel_current(ANALOG_12V_CURRENT_REG, &pwr_12v_analog_i)) {
+		return -EIO;
 	}
 
+#if 0
 	/* apply calibration values */
 	pwr_brd_system_v = (MV_TO_V(pwr_brd_system_v) * SYSTEM_VOLTAGE_SCALE - _scale._bias_cal_term_system_volt) *
 			   _scale._SF_cal_term_system_volt;
@@ -282,44 +255,54 @@ VOLIRO_PB::v_colection()
 	pwr_brd_analog = (pwr_brd_analog - _scale._bias_cal_term_analog_amp) * _scale._SF_cal_term_analog_amp;
 	pwr_brd_ext = (pwr_brd_ext - _scale._bias_cal_term_ext_amp) * _scale._SF_cal_term_ext_amp;
 	pwr_brd_aux	= (pwr_brd_aux - _scale._bias_cal_term_aux_amp) * _scale._SF_cal_term_aux_amp;
+#endif
 
 	/* generate a new report */
-	prb.timestamp = hrt_absolute_time();
+	report.timestamp = hrt_absolute_time();
 
-	prb.pwr_brd_status  	= pwr_brd_status;
-	prb.pwr_brd_led_status  = pwr_brd_led_status;
+	report.pwr_brd_status  	= pwr_brd_status;
+	report.pwr_brd_led_status  = pwr_brd_led_status;
 
-	prb.pwr_brd_blink_reg  = pwr_brd_blink_reg;
-	prb.pwr_brd_led_1_pwr  = pwr_brd_led_1_pwr;
-	prb.pwr_brd_led_2_pwr  = pwr_brd_led_2_pwr;
-	prb.pwr_brd_led_3_pwr  = pwr_brd_led_3_pwr;
-	prb.pwr_brd_led_4_pwr  = pwr_brd_led_4_pwr;
+	report.pwr_brd_blink_reg  = pwr_brd_blink_reg;
+	report.pwr_brd_led_1_pwr  = pwr_brd_led_1_pwr;
+	report.pwr_brd_led_2_pwr  = pwr_brd_led_2_pwr;
+	report.pwr_brd_led_3_pwr  = pwr_brd_led_3_pwr;
+	report.pwr_brd_led_4_pwr  = pwr_brd_led_4_pwr;
 
-	prb.pwr_brd_system_volt = pwr_brd_system_v;
-	prb.pwr_brd_servo_volt  = pwr_brd_servo_v;
-	prb.pwr_brd_digital_volt = pwr_brd_digital_v;
-
-	prb.pwr_brd_mot_l_amp 	= pwr_brd_mot_l;
-	prb.pwr_brd_mot_r_amp 	= pwr_brd_mot_r;
-
-	prb.pwr_brd_digital_amp  = pwr_brd_digital;
-	prb.pwr_brd_analog_amp   = pwr_brd_analog;
-	prb.pwr_brd_ext_amp      = pwr_brd_ext;
-	prb.pwr_brd_aux_amp  	 = pwr_brd_aux;
+	report.pwr_brd_system_volt = pwr_brd_system_v;
+	report.pwr_brd_battery_volt = pwr_brd_system_i;
+	report.pwr_brd_system_amp = pwr_brd_bat_v;
+	report.pwr_brd_battery_amp = pwr_brd_bat_i;
+	report.pwr_5v_analog_amp = pwr_5v_digital_i;
+	report.pwr_5v_digital_amp = pwr_5v_analog_i;
+	report.pwr_12v_analog_amp = pwr_12v_digital_i;
+	report.pwr_12v_digital_amp = pwr_12v_analog_i;
 
 
-	/* generate a new report */
-	if (!FILTERVALUES) {
-		report.relative_humidity = _relative_humidity;					    /* report in percent */
-		report.ambient_temperature = _temperature;						    /* report in cel */
-
-	} else {
-		report.relative_humidity = _filter_v.apply(_relative_humidity);	/* filtered report in percent */
-		report.ambient_temperature = _filter_i.apply(_temperature);		/* filtered report in degc    */
+	/* filter values */
+	if (FILTERVALUES) {
+		report.pwr_brd_system_volt = _filter_v.apply(report.pwr_brd_system_volt);
+		// ADD other values ti filter
 	}
 
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));
-	_px4_voliro_pb.update(timestamp_sample, (float) report.relative_humidity, (float) report.ambient_temperature);
+	_px4_voliro_pb.update(report.timestamp, report.timestamp_sample, report.device_id,
+			      report.pwr_brd_status,
+			      report.pwr_brd_led_status,
+			      report.pwr_brd_blink_reg,
+			      report.pwr_brd_led_1_pwr,
+			      report.pwr_brd_led_2_pwr,
+			      report.pwr_brd_led_3_pwr,
+			      report.pwr_brd_led_4_pwr,
+			      report.pwr_brd_system_volt,
+			      report.pwr_brd_battery_volt,
+			      report.pwr_brd_system_amp,
+			      report.pwr_brd_battery_amp,
+			      report.pwr_5v_analog_amp,
+			      report.pwr_5v_digital_amp,
+			      report.pwr_12v_analog_amp,
+			      report.pwr_12v_digital_amp
+			     );
 
 	//PX4_INFO("VOLIRO_PB: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
 
@@ -329,7 +312,7 @@ VOLIRO_PB::v_colection()
 }
 
 int
-PWR_BRD::self_test()
+VOLIRO_PB::self_test()
 {
 	if (perf_event_count(_sample_perf) == 0) {
 		collect();
@@ -341,11 +324,12 @@ PWR_BRD::self_test()
 
 /* Get registers value */
 int
-PWR_BRD::get_regs(uint8_t ptr, uint8_t *regs)
+VOLIRO_PB::get_regs(uint8_t ptr, uint8_t *regs)
 {
 	uint8_t data[2];
 
 	if (OK != transfer(&ptr, 1, &data[0], 2)) {
+		//if (OK != _interface->read((uint8_t)NULL, &data, 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -357,7 +341,7 @@ PWR_BRD::get_regs(uint8_t ptr, uint8_t *regs)
 
 /* Set registers value */
 int
-PWR_BRD::set_regs(uint8_t ptr, uint8_t value)
+VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 {
 	uint8_t data[2];
 
@@ -388,7 +372,7 @@ PWR_BRD::set_regs(uint8_t ptr, uint8_t value)
 
 /* Set LED power */
 int
-PWR_BRD::set_LED_power(uint8_t ptr, uint8_t pwr_brd_led_pwr)
+VOLIRO_PB::set_LED_power(uint8_t ptr, uint8_t pwr_brd_led_pwr)
 {
 	/* input power -> scale to percentage 0 -100% */
 
@@ -403,7 +387,7 @@ PWR_BRD::set_LED_power(uint8_t ptr, uint8_t pwr_brd_led_pwr)
 
 /* Set LED blink interval in sec*/
 int
-PWR_BRD::set_LED_blink_interval(uint8_t blink_interval_sec)
+VOLIRO_PB::set_LED_blink_interval(uint8_t blink_interval_sec)
 {
 	uint8_t ptr = LED_BLINK_REG;
 	uint8_t led_blink_Reg;
@@ -423,7 +407,7 @@ PWR_BRD::set_LED_blink_interval(uint8_t blink_interval_sec)
 
 /* Set LED number of blinks */
 int
-PWR_BRD::set_LED_number_of_blinks(uint8_t blink_number)
+VOLIRO_PB::set_LED_number_of_blinks(uint8_t blink_number)
 {
 	uint8_t ptr = LED_BLINK_REG;
 	uint8_t led_blink_Reg;
@@ -443,7 +427,7 @@ PWR_BRD::set_LED_number_of_blinks(uint8_t blink_number)
 
 /* Set/Reset LED control remote mode*/
 int
-PWR_BRD::set_remote_mode_LED_control(bool remote_led_enable)
+VOLIRO_PB::set_remote_mode_LED_control(bool remote_led_enable)
 {
 	uint8_t ptr = BRD_STATS_REG;
 	uint8_t status_reg;
@@ -468,7 +452,7 @@ PWR_BRD::set_remote_mode_LED_control(bool remote_led_enable)
 
 /* Get system/servo voltage */
 int
-PWR_BRD::get_voltage(uint8_t ptr, float *voltage)
+VOLIRO_PB::get_voltage(uint8_t ptr, float *voltage)
 {
 	uint8_t data[3];
 
@@ -484,7 +468,7 @@ PWR_BRD::get_voltage(uint8_t ptr, float *voltage)
 
 /* Get channel current */
 int
-PWR_BRD::get_channel_current(uint8_t ptr, float *channel_current)
+VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 {
 	uint8_t data[3];
 
@@ -501,7 +485,7 @@ PWR_BRD::get_channel_current(uint8_t ptr, float *channel_current)
 
 /* Get motor current */
 int
-PWR_BRD::get_motor_current(uint8_t ptr, float *motor_current)
+VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 {
 	uint8_t data[3];
 
@@ -529,8 +513,8 @@ PWR_BRD::get_motor_current(uint8_t ptr, float *motor_current)
 	return OK;
 }
 
-void
-PWR_BRD::print_info()
+int
+VOLIRO_PB::print_info()
 {
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_bad_transfers);
@@ -565,10 +549,12 @@ PWR_BRD::print_info()
 	printf("scaling aux current (%.2f)\n", (double)_scale._SF_cal_term_aux_amp);
 
 	printf("\n");
+
+	return OK;
 }
 
 int
-VOLIRO_PB::cmd_reset()
+VOLIRO_PB::reset_sensor()
 {
 	uint8_t		cmd = RESET_CMD;									/* trigger sensor reset */
 	int		result;
