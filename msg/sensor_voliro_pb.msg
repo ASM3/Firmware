@@ -2,6 +2,7 @@ uint64 timestamp          		# time since system start (microseconds)
 uint64 timestamp_sample
 
 uint32 device_id          		# unique device ID for the sensor that does not change between power cycles
+uint32 error_count
 
 uint8 pwr_brd_status			# power boards status register
 uint8 pwr_brd_led_status		# power boards power leds status
