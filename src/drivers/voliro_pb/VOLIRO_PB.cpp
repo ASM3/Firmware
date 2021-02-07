@@ -60,7 +60,8 @@ VOLIRO_PB::reset()
 int
 VOLIRO_PB::configure_sensor()
 {
-	_measurement_res = SHT2x_RES_12_14BIT;				// ToDo: proper allocation
+#if 0
+	//_measurement_res = SHT2x_RES_12_14BIT;				// ToDo: proper allocation
 
 	/* send change resolution command */
 	int ret = res_change(_measurement_res);
@@ -75,10 +76,13 @@ VOLIRO_PB::configure_sensor()
 	_state = State::temperature_measurement;
 
 	return ret;
+#endif
+	return PX4_OK;
 }
 
 int VOLIRO_PB::reset_sensor()
 {
+	#if 0
 	/* send a reset command */
 	int ret = cmd_reset();
 
@@ -90,6 +94,8 @@ int VOLIRO_PB::reset_sensor()
 	_state = State::configure;
 
 	return ret;
+#endif
+	return PX4_OK;
 }
 
 void
@@ -141,7 +147,7 @@ VOLIRO_PB::RunImpl()
 }
 
 int
-VOLIRO_PB::burst_colection()
+VOLIRO_PB::burst_collection()
 {
 
 	sensor_voliro_pb_s report{};
@@ -150,9 +156,7 @@ VOLIRO_PB::burst_colection()
 	perf_begin(_sample_perf);
 
 	/* this should be fairly close to the end of the conversion, so the best approximation of the time */
-	report.timestamp = hrt_absolute_time();
-
-	const hrt_abstime timestamp_sample = hrt_absolute_time();
+	report.timestamp_sample = hrt_absolute_time();
 
 	/* fetch the raw value */
 
@@ -286,7 +290,8 @@ VOLIRO_PB::burst_colection()
 	}
 
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));
-	_px4_voliro_pb.update(report.timestamp, report.timestamp_sample, report.device_id,
+#if 0
+	_px4_voliro_pb.update(report.timestamp_sample,
 			      report.pwr_brd_status,
 			      report.pwr_brd_led_status,
 			      report.pwr_brd_blink_reg,
@@ -301,8 +306,9 @@ VOLIRO_PB::burst_colection()
 			      report.pwr_5v_analog_amp,
 			      report.pwr_5v_digital_amp,
 			      report.pwr_12v_analog_amp,
-			      report.pwr_12v_digital_amp
-			     );
+			      report.pwr_12v_digital_amp);
+#endif
+	_px4_voliro_pb.update(report);
 
 	//PX4_INFO("VOLIRO_PB: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
 
@@ -315,7 +321,7 @@ int
 VOLIRO_PB::self_test()
 {
 	if (perf_event_count(_sample_perf) == 0) {
-		collect();
+		//collect();									//ToDo: implement self test function
 	}
 
 	/* return 0 on success, 1 else */
@@ -328,8 +334,8 @@ VOLIRO_PB::get_regs(uint8_t ptr, uint8_t *regs)
 {
 	uint8_t data[2];
 
-	if (OK != transfer(&ptr, 1, &data[0], 2)) {
-		//if (OK != _interface->read((uint8_t)NULL, &data, 3)) {
+	//if (OK != transfer(&ptr, 1, &data[0], 2)) {
+	if (OK != _interface->read(ptr, &data[0], 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -348,7 +354,8 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 	data[0] = ptr;
 	data[1] = value;
 
-	if (OK != transfer(&data[0], 2, nullptr, 0)) {
+	//if (OK != transfer(&data[0], 2, nullptr, 0)) {
+	if (OK != _interface->write(ptr, &value, 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -358,7 +365,8 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 
 	/* read back the reg and verify */
 
-	if (OK != transfer(&ptr, 1, &data[0], 2)) {
+	//if (OK != transfer(&ptr, 1, &data[0], 2)) {
+	if (OK != _interface->read(ptr, &data[1], 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -456,7 +464,8 @@ VOLIRO_PB::get_voltage(uint8_t ptr, float *voltage)
 {
 	uint8_t data[3];
 
-	if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -472,7 +481,8 @@ VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 {
 	uint8_t data[3];
 
-	if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -489,11 +499,12 @@ VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 {
 	uint8_t data[3];
 
-	if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
+	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
-
+#if 0
 	if (ptr == MOT_L_CURRENT_REG) {
 		*motor_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE /
 				 ADC_FULLSCALE / MOTOR_L_CURRENT_CONV_FARTOR;
@@ -509,7 +520,7 @@ VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 	} else {
 		return -EIO;
 	}
-
+#endif
 	return OK;
 }
 
@@ -517,10 +528,7 @@ int
 VOLIRO_PB::print_info()
 {
 	perf_print_counter(_sample_perf);
-	perf_print_counter(_bad_transfers);
-	perf_print_counter(_good_transfers);
-	_reports->print_info("pwr_brd queue");
-
+#if 0
 	printf("offsets system voltage (%.2f)\n", (double)_scale._bias_cal_term_system_volt);
 	printf("scaling system voltage (%.2f)\n", (double)_scale._SF_cal_term_system_volt);
 
@@ -547,24 +555,10 @@ VOLIRO_PB::print_info()
 
 	printf("offsets aux current (%.2f)\n", (double)_scale._bias_cal_term_aux_amp);
 	printf("scaling aux current (%.2f)\n", (double)_scale._SF_cal_term_aux_amp);
-
+#endif
 	printf("\n");
 
 	return OK;
-}
-
-int
-VOLIRO_PB::reset_sensor()
-{
-	uint8_t		cmd = RESET_CMD;									/* trigger sensor reset */
-	int		result;
-
-	//result = _interface->write((uint8_t)cmd, nullptr, 0);
-
-	// make sure to wait 15ms after configuring the measurement mode
-	//ScheduleDelayed(15_ms);
-
-	return result;
 }
 
 void

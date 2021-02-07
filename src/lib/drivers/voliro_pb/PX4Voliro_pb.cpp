@@ -66,32 +66,36 @@ void PX4Voliro_pb::set_device_type(uint8_t devtype)
 	// copy back to report
 	_sensor_voliro_pb_pub.get().device_id = device_id.devid;
 }
-
+#if 0
 void PX4Voliro_pb::update(const hrt_abstime &timestamp_sample, uint8_t pwr_brd_status, uint8_t pwr_brd_led_status,
 			  uint8_t pwr_brd_blink_reg, uint8_t pwr_brd_led_1_pwr, uint8_t pwr_brd_led_2_pwr, uint8_t pwr_brd_led_3_pwr,
 			  uint8_t pwr_brd_led_4_pwr, float pwr_brd_system_volt, float pwr_brd_system_amp, float pwr_brd_battery_volt,
 			  float pwr_brd_battery_amp, float pwr_5v_analog_amp, float pwr_5v_digital_amp, float pwr_12v_analog_amp,
 			  float pwr_12v_digital_amp)
 {
+#endif
+	void PX4Voliro_pb::update(sensor_voliro_pb_s voliro_pb_data){
+
 	sensor_voliro_pb_s &report = _sensor_voliro_pb_pub.get();
 
-	report.timestamp_sample = timestamp_sample;
 	report.timestamp = hrt_absolute_time();
-	report.pwr_brd_status = pwr_brd_status;
-	report.pwr_brd_led_status = pwr_brd_led_status;
-	report.pwr_brd_blink_reg = pwr_brd_blink_reg;
-	report.pwr_brd_led_1_pwr = pwr_brd_led_1_pwr;
-	report.pwr_brd_led_2_pwr = pwr_brd_led_2_pwr;
-	report.pwr_brd_led_3_pwr = pwr_brd_led_3_pwr;
-	report.pwr_brd_led_4_pwr = pwr_brd_led_4_pwr;
-	report.pwr_brd_system_volt = pwr_brd_system_volt;
-	report.pwr_brd_system_amp = pwr_brd_system_amp;
-	report.pwr_brd_battery_volt = pwr_brd_battery_volt;
-	report.pwr_brd_battery_amp = pwr_brd_battery_amp;
-	report.pwr_5v_analog_amp = pwr_5v_analog_amp;
-	report.pwr_5v_digital_amp = pwr_5v_digital_amp;
-	report.pwr_12v_analog_amp = pwr_12v_analog_amp;
-	report.pwr_12v_digital_amp = pwr_12v_digital_amp;
+
+	report.timestamp_sample = voliro_pb_data.timestamp_sample;
+	report.pwr_brd_status = voliro_pb_data.pwr_brd_status;
+	report.pwr_brd_led_status = voliro_pb_data.pwr_brd_led_status;
+	report.pwr_brd_blink_reg = voliro_pb_data.pwr_brd_blink_reg;
+	report.pwr_brd_led_1_pwr = voliro_pb_data.pwr_brd_led_1_pwr;
+	report.pwr_brd_led_2_pwr = voliro_pb_data.pwr_brd_led_2_pwr;
+	report.pwr_brd_led_3_pwr = voliro_pb_data.pwr_brd_led_3_pwr;
+	report.pwr_brd_led_4_pwr = voliro_pb_data.pwr_brd_led_4_pwr;
+	report.pwr_brd_system_volt = voliro_pb_data.pwr_brd_system_volt;
+	report.pwr_brd_system_amp = voliro_pb_data.pwr_brd_system_amp;
+	report.pwr_brd_battery_volt = voliro_pb_data.pwr_brd_battery_volt;
+	report.pwr_brd_battery_amp = voliro_pb_data.pwr_brd_battery_amp;
+	report.pwr_5v_analog_amp = voliro_pb_data.pwr_5v_analog_amp;
+	report.pwr_5v_digital_amp = voliro_pb_data.pwr_5v_digital_amp;
+	report.pwr_12v_analog_amp = voliro_pb_data.pwr_12v_analog_amp;
+	report.pwr_12v_digital_amp = voliro_pb_data.pwr_12v_digital_amp;
 
 	_sensor_voliro_pb_pub.update();
 }

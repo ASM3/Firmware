@@ -23,6 +23,8 @@
 
 
 /* VOLIRO_PB internal constants and data structures.									*/
+#define VOLIRO_PB_SLAVE_ADDRESS	  0x40
+#define VOLIRO_PB_BUS_SPEED       100*1000
 
 #define LED_STATS_REG			0x00	/* Pointer to the address of the led board status register 				*/
 #define LED_BLINK_REG			0x01	/* Pointer to the address of the led blink register  					*/
@@ -83,8 +85,7 @@ public:
 private:
 	enum class State {
 		configure,
-		V_collection,
-		I_collection
+		burst_collection
 	};
 
 	void start();
@@ -97,7 +98,9 @@ private:
 	perf_counter_t		_sample_perf;
 	perf_counter_t		_comms_errors;
 
-	struct voliro_pb_calibration_s    _scale;
+	State 				_state;
+
+	//struct voliro_pb_calibration_s    _scale;
 
 	float _bias_cal_term_system_volt;
 	float _SF_cal_term_system_volt;
@@ -160,7 +163,7 @@ private:
 	 *
 	 * @return		OK if the measurement command was successful.
 	 */
-	int			burst_colection();
+	int			burst_collection();
 
 	/**
 	 * Issue a sensor self test command.
