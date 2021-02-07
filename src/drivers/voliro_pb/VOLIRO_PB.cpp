@@ -82,7 +82,7 @@ VOLIRO_PB::configure_sensor()
 
 int VOLIRO_PB::reset_sensor()
 {
-	#if 0
+#if 0
 	/* send a reset command */
 	int ret = cmd_reset();
 
@@ -504,7 +504,9 @@ VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 		perf_count(_comms_errors);
 		return -EIO;
 	}
+
 #if 0
+
 	if (ptr == MOT_L_CURRENT_REG) {
 		*motor_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE /
 				 ADC_FULLSCALE / MOTOR_L_CURRENT_CONV_FARTOR;
@@ -520,6 +522,7 @@ VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 	} else {
 		return -EIO;
 	}
+
 #endif
 	return OK;
 }
