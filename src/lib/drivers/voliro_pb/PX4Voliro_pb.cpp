@@ -66,14 +66,7 @@ void PX4Voliro_pb::set_device_type(uint8_t devtype)
 	// copy back to report
 	_sensor_voliro_pb_pub.get().device_id = device_id.devid;
 }
-#if 0
-void PX4Voliro_pb::update(const hrt_abstime &timestamp_sample, uint8_t pwr_brd_status, uint8_t pwr_brd_led_status,
-			  uint8_t pwr_brd_blink_reg, uint8_t pwr_brd_led_1_pwr, uint8_t pwr_brd_led_2_pwr, uint8_t pwr_brd_led_3_pwr,
-			  uint8_t pwr_brd_led_4_pwr, float pwr_brd_system_volt, float pwr_brd_system_amp, float pwr_brd_battery_volt,
-			  float pwr_brd_battery_amp, float pwr_5v_analog_amp, float pwr_5v_digital_amp, float pwr_12v_analog_amp,
-			  float pwr_12v_digital_amp)
-{
-#endif
+
 	void PX4Voliro_pb::update(sensor_voliro_pb_s voliro_pb_data) {
 
 		sensor_voliro_pb_s &report = _sensor_voliro_pb_pub.get();
