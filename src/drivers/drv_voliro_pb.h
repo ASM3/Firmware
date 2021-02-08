@@ -51,6 +51,24 @@
 
 #define voliro_pb_report sensor_voliro_pb_s
 
+struct voliro_pb_calibration_s {
+	float _bias_cal_term_system_volt;
+	float _SF_cal_term_system_volt;
+	float _bias_cal_term_system_amp;
+	float _SF_cal_term_system_amp;
+	float _bias_cal_term_battery_volt;
+	float _SF_cal_term_battery_volt;
+	float _bias_cal_term_battery_amp;
+	float _SF_cal_term_battery_amp;
+	float _bias_cal_term_5v_digital_amp;
+	float _SF_cal_term_5v_digital_amp;
+	float _bias_cal_term_5v_analog_amp;
+	float _SF_cal_term_5v_analog_amp;
+	float _bias_cal_term_12v_digital_amp;
+	float _SF_cal_term_12v_digital_amp;
+	float _bias_cal_term_12v_analog_amp;
+	float _SF_cal_term_12v_analog_amp;
+};
 
 /*
  * ioctl() definitions
