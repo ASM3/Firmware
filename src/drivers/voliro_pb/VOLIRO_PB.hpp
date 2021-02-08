@@ -22,27 +22,27 @@
 #include <px4_platform_common/i2c_spi_buses.h>
 
 
-/* VOLIRO_PB internal constants and data structures.									*/
-#define VOLIRO_PB_SLAVE_ADDRESS	  0x40
-#define VOLIRO_PB_BUS_SPEED       100*1000
+/* VOLIRO_PB internal constants and data structures.																*/
+#define VOLIRO_PB_SLAVE_ADDRESS	0x49      /* Power board I2C address												*/
+#define VOLIRO_PB_BUS_SPEED     100*1000  /* Power board I2C bus speed 												*/
 
-#define LED_STATS_REG			0x00	/* Pointer to the address of the led board status register 				*/
-#define LED_BLINK_REG			0x01	/* Pointer to the address of the led blink register  					*/
-#define LED_POW_1_REG			0x02	/* Pointer to the address of the led power register of channel 1 		*/
-#define LED_POW_2_REG			0x03	/* Pointer to the address of the led power register of channel 2  		*/
-#define LED_POW_3_REG			0x04	/* Pointer to the address of the led power register of channel 3  		*/
-#define LED_POW_4_REG			0x05	/* Pointer to the address of the led power register of channel 4  		*/
-#define BRD_STATS_REG			0x06	/* Pointer to the address of the board status register 					*/
-#define SYSTEM_VOLT_REG			0x07	/* Pointer to the address of board system voltage register			  	*/
-#define SYSTEM_CURRENT_REG		0x09	/* Pointer to the address of board system current register				*/
-#define BAT_VOLT_REG			0x0b	/* Pointer to the address of board battery voltage register			  	*/
-#define BAT_CURRENT_REG			0x0d	/* Pointer to the address of board battery current register			  	*/
-#define DIGITAL_5V_CURRENT_REG	0x0f	/* Pointer to the address of board 5v digital current register			*/
-#define ANALOG_5V_CURRENT_REG	0x11	/* Pointer to the address of board 5v analog current register			*/
-#define DIGITAL_12V_CURRENT_REG	0x13	/* Pointer to the address of board 12v digital current register			*/
-#define ANALOG_12V_CURRENT_REG	0x15	/* Pointer to the address of board 12v analog current register			*/
+#define LED_STATS_REG			0x00	  /* Pointer to the address of the led board status register 				*/
+#define LED_BLINK_REG			0x01	  /* Pointer to the address of the led blink register  						*/
+#define LED_POW_1_REG			0x02	  /* Pointer to the address of the led power register of channel 1 			*/
+#define LED_POW_2_REG			0x03	  /* Pointer to the address of the led power register of channel 2  		*/
+#define LED_POW_3_REG			0x04	  /* Pointer to the address of the led power register of channel 3  		*/
+#define LED_POW_4_REG			0x05	  /* Pointer to the address of the led power register of channel 4  		*/
+#define BRD_STATS_REG			0x06	  /* Pointer to the address of the board status register 					*/
+#define SYSTEM_VOLT_REG			0x07	  /* Pointer to the address of board system voltage register			  	*/
+#define SYSTEM_CURRENT_REG		0x09	  /* Pointer to the address of board system current register				*/
+#define BAT_VOLT_REG			0x0b	  /* Pointer to the address of board battery voltage register			  	*/
+#define BAT_CURRENT_REG			0x0d	  /* Pointer to the address of board battery current register			  	*/
+#define DIGITAL_5V_CURRENT_REG	0x0f	  /* Pointer to the address of board 5v digital current register			*/
+#define ANALOG_5V_CURRENT_REG	0x11	  /* Pointer to the address of board 5v analog current register				*/
+#define DIGITAL_12V_CURRENT_REG	0x13	  /* Pointer to the address of board 12v digital current register			*/
+#define ANALOG_12V_CURRENT_REG	0x15	  /* Pointer to the address of board 12v analog current register			*/
 
-#define LED_REMOTE_MODE_BIT     0x4		/* LED remote mode bit on the status register		   					*/
+#define LED_REMOTE_MODE_BIT     0x4		  /* LED remote mode bit on the status register		   						*/
 
 #define ADC_FULLSCALE				1024.0f
 #define VOLTAGE_FULLSCALE			3300.0f
