@@ -45,14 +45,19 @@
 #define LED_REMOTE_MODE_BIT     0x4		  /* LED remote mode bit on the status register		   						*/
 
 #define ADC_FULLSCALE				1024.0f
-#define VOLTAGE_FULLSCALE			3300.0f
-#define CHANNEL_CURRENT_CONV_FARTOR	132.0f
-#define MOTOR_L_CURRENT_CONV_FARTOR	66.0f
-#define MOTOR_R_CURRENT_CONV_FARTOR	33.0f
-#define EXT_CURRENT_CONV_FARTOR	    33.0f
-#define SYSTEM_VOLTAGE_SCALE		9.333f
-#define SERVO_VOLTAGE_SCALE			2.0f
-#define DIGITAL_VOLTAGE_SCALE		2.0f
+#define VOLTAGE_FULLSCALE			3000.0f
+#define SYSTEM_VOLTAGE_SCALE		10.0f
+#define SYSTEM_CURRENT_SCALE		25.0f
+#define BATTERY_VOLTAGE_SCALE		10.0f
+#define BATTERY_CURRENT_SCALE		25.0f
+#define CHANNEL_CURRENT_CONV_FACTOR	264.0f
+#define ZERO_CURRENT_OFFSET_VOLTAGE	325.0f
+//#define MOTOR_L_CURRENT_CONV_FARTOR	66.0f
+//#define MOTOR_R_CURRENT_CONV_FARTOR	33.0f
+//#define EXT_CURRENT_CONV_FARTOR	    33.0f
+
+//#define SERVO_VOLTAGE_SCALE			2.0f
+//#define DIGITAL_VOLTAGE_SCALE		2.0f
 
 #define FILTERVALUES			  false /* filtering measured values 				*/
 
@@ -64,7 +69,7 @@
 /* arithmetic helper macro: convert millivolt to volt */
 #define MV_TO_V(_x)		( (_x) * 0.001f )
 
-#define SETLEDPOWER 1
+//#define SETLEDPOWER 1
 
 class VOLIRO_PB : public I2CSPIDriver<VOLIRO_PB>
 {
@@ -100,31 +105,7 @@ private:
 
 	State 				_state;
 
-	//struct voliro_pb_calibration_s    _scale;
-
-	float _bias_cal_term_system_volt;
-	float _SF_cal_term_system_volt;
-
-	float _bias_cal_term_servo_volt;
-	float _SF_cal_term_servo_volt;
-
-	float _bias_cal_term_mot_l_amp;
-	float _SF_cal_term_mot_l_amp;
-
-	float _bias_cal_term_mot_r_amp;
-	float _SF_cal_term_mot_r_amp;
-
-	float _bias_cal_term_digital_amp;
-	float _SF_cal_term_digital_amp;
-	float _bias_cal_term_analog_amp;
-	float _SF_cal_term_analog_amp;
-	float _bias_cal_term_ext_amp;
-	float _SF_cal_term_ext_amp;
-	float _bias_cal_term_digital_volt;
-	float _SF_cal_term_digital_volt;
-
-	float _bias_cal_term_aux_amp;
-	float _SF_cal_term_aux_amp;
+	struct voliro_pb_calibration_s    _scale;
 
 	unsigned _pwr_brd_led_blink_int;
 	unsigned _pwr_brd_led_blink_number;
