@@ -24,6 +24,23 @@ VOLIRO_PB::VOLIRO_PB(I2CSPIBusOption bus_option, int bus, device::Device *interf
 	_sample_perf(perf_alloc(PC_ELAPSED, MODULE_NAME": read")),
 	_comms_errors(perf_alloc(PC_COUNT, MODULE_NAME": comm errors"))
 {
+	// default scaling
+	_scale._bias_cal_term_system_volt = 0.0;
+	_scale._SF_cal_term_system_volt = 1.0;
+	_scale._bias_cal_term_system_amp = 0.0;
+	_scale._SF_cal_term_system_amp = 1.0;
+	_scale._bias_cal_term_battery_volt = 0.0;
+	_scale._SF_cal_term_battery_volt = 1.0;
+	_scale._bias_cal_term_battery_amp = 0.0;
+	_scale._SF_cal_term_battery_amp = 1.0;
+	_scale._bias_cal_term_5v_digital_amp = 0.0;
+	_scale._SF_cal_term_5v_digital_amp = 1.0;
+	_scale._bias_cal_term_5v_analog_amp = 0.0;
+	_scale._SF_cal_term_5v_analog_amp = 1.0;
+	_scale._bias_cal_term_12v_digital_amp = 0.0;
+	_scale._SF_cal_term_12v_digital_amp = 1.0;
+	_scale._bias_cal_term_12v_analog_amp = 0.0;
+	_scale._SF_cal_term_12v_analog_amp = 1.0;
 }
 
 VOLIRO_PB::~VOLIRO_PB()
@@ -217,7 +234,7 @@ VOLIRO_PB::burst_collection()
 		return -EIO;
 	}
 
-	if (OK != get_channel_current(SYSTEM_CURRENT_REG, &pwr_brd_system_i)) {
+	if (OK != get_voltage(SYSTEM_CURRENT_REG, &pwr_brd_system_i)) {
 		return -EIO;
 	}
 
@@ -225,7 +242,7 @@ VOLIRO_PB::burst_collection()
 		return -EIO;
 	}
 
-	if (OK != get_channel_current(BAT_CURRENT_REG, &pwr_brd_bat_i)) {
+	if (OK != get_voltage(BAT_CURRENT_REG, &pwr_brd_bat_i)) {
 		return -EIO;
 	}
 
@@ -262,6 +279,22 @@ VOLIRO_PB::burst_collection()
 	pwr_brd_ext = (pwr_brd_ext - _scale._bias_cal_term_ext_amp) * _scale._SF_cal_term_ext_amp;
 	pwr_brd_aux	= (pwr_brd_aux - _scale._bias_cal_term_aux_amp) * _scale._SF_cal_term_aux_amp;
 #endif
+
+	/* apply conversion and calibration values */
+	pwr_brd_system_v = (MV_TO_V(pwr_brd_system_v) * SYSTEM_VOLTAGE_SCALE - _scale._bias_cal_term_system_volt) *
+			   _scale._SF_cal_term_system_volt;
+	pwr_brd_system_i = (MV_TO_V(pwr_brd_system_i) * SYSTEM_CURRENT_SCALE - _scale._bias_cal_term_system_amp) *
+			   _scale._SF_cal_term_system_amp;
+
+	pwr_brd_bat_v = (MV_TO_V(pwr_brd_bat_v) * BATTERY_VOLTAGE_SCALE - _scale._bias_cal_term_battery_volt) *
+			_scale._SF_cal_term_battery_volt;
+	pwr_brd_bat_i = (MV_TO_V(pwr_brd_bat_i) * BATTERY_CURRENT_SCALE - _scale._bias_cal_term_battery_amp) *
+			_scale._SF_cal_term_battery_amp;
+
+	pwr_5v_digital_i = (pwr_5v_digital_i - _scale._bias_cal_term_5v_digital_amp) * _scale._SF_cal_term_5v_digital_amp;
+	pwr_5v_analog_i = (pwr_5v_analog_i - _scale._bias_cal_term_5v_analog_amp) * _scale._SF_cal_term_5v_analog_amp;
+	pwr_12v_digital_i = (pwr_12v_digital_i - _scale._bias_cal_term_12v_digital_amp) * _scale._SF_cal_term_12v_digital_amp;
+	pwr_12v_analog_i = (pwr_12v_analog_i - _scale._bias_cal_term_12v_analog_amp) * _scale._SF_cal_term_12v_analog_amp;
 
 	/* generate a new report */
 	report.timestamp = hrt_absolute_time();
@@ -482,8 +515,9 @@ VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 		return -EIO;
 	}
 
-	*channel_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE /
-			   ADC_FULLSCALE / CHANNEL_CURRENT_CONV_FARTOR;
+	//*channel_current = ((((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE / ADC_FULLSCALE) - ZERO_CURRENT_OFFSET_VOLTAGE) / CHANNEL_CURRENT_CONV_FACTOR;
+	*channel_current = ((((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1])) * VOLTAGE_FULLSCALE / ADC_FULLSCALE) -
+			    ZERO_CURRENT_OFFSET_VOLTAGE) / CHANNEL_CURRENT_CONV_FACTOR;
 
 	return OK;
 }
