@@ -147,6 +147,13 @@ then
 	fi
 fi
 
+# Voliro PB sensor
+if voliro_pb -X -b 4 start
+then
+else
+	tune_control play -m ${TUNE_ERR}
+fi
+
 ###############################################################################
 #                            End Optional drivers                             #
 ###############################################################################
