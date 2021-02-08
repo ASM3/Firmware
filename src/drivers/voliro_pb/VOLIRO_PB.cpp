@@ -140,6 +140,8 @@ VOLIRO_PB::RunImpl()
 		} else {
 			/* try to reconfigure */
 			_state = State::configure;
+			/* periodically retry to configure */
+			ScheduleDelayed(300_ms);
 		}
 
 		break;
@@ -290,27 +292,25 @@ VOLIRO_PB::burst_collection()
 	}
 
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));
-#if 0
-	_px4_voliro_pb.update(report.timestamp_sample,
-			      report.pwr_brd_status,
-			      report.pwr_brd_led_status,
-			      report.pwr_brd_blink_reg,
-			      report.pwr_brd_led_1_pwr,
-			      report.pwr_brd_led_2_pwr,
-			      report.pwr_brd_led_3_pwr,
-			      report.pwr_brd_led_4_pwr,
-			      report.pwr_brd_system_volt,
-			      report.pwr_brd_battery_volt,
-			      report.pwr_brd_system_amp,
-			      report.pwr_brd_battery_amp,
-			      report.pwr_5v_analog_amp,
-			      report.pwr_5v_digital_amp,
-			      report.pwr_12v_analog_amp,
-			      report.pwr_12v_digital_amp);
-#endif
+
 	_px4_voliro_pb.update(report);
 
-	//PX4_INFO("VOLIRO_PB: Temperature is: %3.2f C, humidity value is: %3.2f", (double) _temperature, (double) _relative_humidity);
+	PX4_INFO("VOLIRO_PB: %x, %x, %x, %u, %u, %u, %u, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f",
+		 report.pwr_brd_status,
+		 report.pwr_brd_led_status,
+		 report.pwr_brd_blink_reg,
+		 report.pwr_brd_led_1_pwr,
+		 report.pwr_brd_led_2_pwr,
+		 report.pwr_brd_led_3_pwr,
+		 report.pwr_brd_led_4_pwr,
+		 (double) report.pwr_brd_system_volt,
+		 (double) report.pwr_brd_battery_volt,
+		 (double) report.pwr_brd_system_amp,
+		 (double) report.pwr_brd_battery_amp,
+		 (double) report.pwr_5v_analog_amp,
+		 (double) report.pwr_5v_digital_amp,
+		 (double) report.pwr_12v_analog_amp,
+		 (double) report.pwr_12v_digital_amp);
 
 	perf_end(_sample_perf);
 
@@ -334,7 +334,6 @@ VOLIRO_PB::get_regs(uint8_t ptr, uint8_t *regs)
 {
 	uint8_t data[2];
 
-	//if (OK != transfer(&ptr, 1, &data[0], 2)) {
 	if (OK != _interface->read(ptr, &data[0], 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -352,9 +351,8 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 	uint8_t data[2];
 
 	data[0] = ptr;
-	data[1] = value;
+	data[1] = 0;
 
-	//if (OK != transfer(&data[0], 2, nullptr, 0)) {
 	if (OK != _interface->write(ptr, &value, 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -365,8 +363,7 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 
 	/* read back the reg and verify */
 
-	//if (OK != transfer(&ptr, 1, &data[0], 2)) {
-	if (OK != _interface->read(ptr, &data[1], 1)) {
+	if (OK != _interface->read(ptr, &data[0], 2)) {
 		perf_count(_comms_errors);
 		return -EIO;
 	}
@@ -458,13 +455,12 @@ VOLIRO_PB::set_remote_mode_LED_control(bool remote_led_enable)
 	return OK;
 }
 
-/* Get system/servo voltage */
+/* Get system/bat voltage */
 int
 VOLIRO_PB::get_voltage(uint8_t ptr, float *voltage)
 {
 	uint8_t data[3];
 
-	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
 	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -481,7 +477,6 @@ VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 {
 	uint8_t data[3];
 
-	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
 	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -499,7 +494,6 @@ VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
 {
 	uint8_t data[3];
 
-	//if (OK != transfer(&ptr, 1, &data[0], 3)) {
 	if (OK != _interface->read(ptr, &data[0], 3)) {
 		perf_count(_comms_errors);
 		return -EIO;
