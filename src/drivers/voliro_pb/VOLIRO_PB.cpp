@@ -77,33 +77,26 @@ VOLIRO_PB::reset()
 int
 VOLIRO_PB::configure_sensor()
 {
-#if 0
-	//_measurement_res = SHT2x_RES_12_14BIT;				// ToDo: proper allocation
+	uint8_t ret = PX4_OK;
 
-	/* send change resolution command */
-	int ret = res_change(_measurement_res);
+	// ToDo: add sensors configuration function
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
-		_state = State::configure;
-		init();
 		return ret;
 	}
 
-	_state = State::temperature_measurement;
-
 	return ret;
-#endif
-	return PX4_OK;
+
 }
 
 int VOLIRO_PB::reset_sensor()
 {
-#if 0
+
+	uint8_t ret = PX4_OK;
+
 	/* send a reset command */
-	//int ret = cmd_reset();
-	uint8_t pwr_brd_led_status = 0x0f;
-	int ret = set_regs(LED_STATS_REG, pwr_brd_led_status);
+	// ToDo: implement a reset function on the PB side
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
@@ -113,8 +106,7 @@ int VOLIRO_PB::reset_sensor()
 	_state = State::configure;
 
 	return ret;
-#endif
-	return PX4_OK;
+
 }
 
 void
@@ -264,24 +256,6 @@ VOLIRO_PB::burst_collection()
 		return -EIO;
 	}
 
-#if 0
-	/* apply calibration values */
-	pwr_brd_system_v = (MV_TO_V(pwr_brd_system_v) * SYSTEM_VOLTAGE_SCALE - _scale._bias_cal_term_system_volt) *
-			   _scale._SF_cal_term_system_volt;
-	pwr_brd_servo_v  = (MV_TO_V(pwr_brd_servo_v) * SERVO_VOLTAGE_SCALE - _scale._bias_cal_term_servo_volt) *
-			   _scale._SF_cal_term_servo_volt;
-	pwr_brd_digital_v = (MV_TO_V(pwr_brd_digital_v) * DIGITAL_VOLTAGE_SCALE - _scale._bias_cal_term_digital_volt) *
-			    _scale._SF_cal_term_digital_volt;
-
-	pwr_brd_mot_l = (pwr_brd_mot_l - _scale._bias_cal_term_mot_l_amp) * _scale._SF_cal_term_mot_l_amp;
-	pwr_brd_mot_r = (pwr_brd_mot_r - _scale._bias_cal_term_mot_r_amp) * _scale._SF_cal_term_mot_r_amp;
-
-	pwr_brd_digital = (pwr_brd_digital - _scale._bias_cal_term_digital_amp) * _scale._SF_cal_term_digital_amp;
-	pwr_brd_analog = (pwr_brd_analog - _scale._bias_cal_term_analog_amp) * _scale._SF_cal_term_analog_amp;
-	pwr_brd_ext = (pwr_brd_ext - _scale._bias_cal_term_ext_amp) * _scale._SF_cal_term_ext_amp;
-	pwr_brd_aux	= (pwr_brd_aux - _scale._bias_cal_term_aux_amp) * _scale._SF_cal_term_aux_amp;
-#endif
-
 	/* apply conversion and calibration values */
 	pwr_brd_system_v = (MV_TO_V(pwr_brd_system_v) * SYSTEM_VOLTAGE_SCALE - _scale._bias_cal_term_system_volt) *
 			   _scale._SF_cal_term_system_volt;
@@ -318,7 +292,6 @@ VOLIRO_PB::burst_collection()
 	report.pwr_5v_digital_amp = pwr_5v_analog_i;
 	report.pwr_12v_analog_amp = pwr_12v_digital_i;
 	report.pwr_12v_digital_amp = pwr_12v_analog_i;
-
 
 	/* filter values */
 	if (FILTERVALUES) {

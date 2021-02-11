@@ -21,7 +21,6 @@
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <px4_platform_common/i2c_spi_buses.h>
 
-
 /* VOLIRO_PB internal constants and data structures.																*/
 #define VOLIRO_PB_SLAVE_ADDRESS	0x49      /* Power board I2C address												*/
 #define VOLIRO_PB_BUS_SPEED     100*1000  /* Power board I2C bus speed 												*/
@@ -52,12 +51,6 @@
 #define BATTERY_CURRENT_SCALE		25.0f
 #define CHANNEL_CURRENT_CONV_FACTOR	264.0f
 #define ZERO_CURRENT_OFFSET_VOLTAGE	325.0f
-//#define MOTOR_L_CURRENT_CONV_FARTOR	66.0f
-//#define MOTOR_R_CURRENT_CONV_FARTOR	33.0f
-//#define EXT_CURRENT_CONV_FARTOR	    33.0f
-
-//#define SERVO_VOLTAGE_SCALE			2.0f
-//#define DIGITAL_VOLTAGE_SCALE		2.0f
 
 #define FILTERVALUES			  false /* filtering measured values 				*/
 
@@ -68,8 +61,6 @@
 
 /* arithmetic helper macro: convert millivolt to volt */
 #define MV_TO_V(_x)		( (_x) * 0.001f )
-
-//#define SETLEDPOWER 1
 
 class VOLIRO_PB : public I2CSPIDriver<VOLIRO_PB>
 {
