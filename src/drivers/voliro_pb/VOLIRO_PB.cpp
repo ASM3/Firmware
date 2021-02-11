@@ -41,6 +41,15 @@ VOLIRO_PB::VOLIRO_PB(I2CSPIBusOption bus_option, int bus, device::Device *interf
 	_scale._SF_cal_term_12v_digital_amp = 1.0;
 	_scale._bias_cal_term_12v_analog_amp = 0.0;
 	_scale._SF_cal_term_12v_analog_amp = 1.0;
+	// default settings
+	_pwr_brd_led_status = 0;
+	_pwr_brd_led_blink_int = 0xf;
+	_pwr_brd_led_mask = 0x0;
+	_pwr_brd_led_remote_mode = true;
+	_pwr_brd_led_power_1 = 100;
+	_pwr_brd_led_power_2 = 80;
+	_pwr_brd_led_power_3 = 60;
+	_pwr_brd_led_power_4 = 40;
 }
 
 VOLIRO_PB::~VOLIRO_PB()
@@ -79,15 +88,37 @@ VOLIRO_PB::configure_sensor()
 {
 	uint8_t ret = PX4_OK;
 
-	// ToDo: add sensors configuration function
-
-	if (ret != PX4_OK) {
+	if (OK != set_LED_blink_interval(_pwr_brd_led_blink_int)) {
 		perf_count(_comms_errors);
-		return ret;
+		return -EIO;
+	}
+
+	if (OK != set_LED_mask(_pwr_brd_led_mask)) {
+		perf_count(_comms_errors);
+		return -EIO;
+	}
+
+	if (OK != set_LED_power(LED_POW_1_REG, _pwr_brd_led_power_1)) {
+		perf_count(_comms_errors);
+		return -EIO;
+	}
+
+	if (OK != set_LED_power(LED_POW_2_REG, _pwr_brd_led_power_2)) {
+		perf_count(_comms_errors);
+		return -EIO;
+	}
+
+	if (OK != set_LED_power(LED_POW_3_REG, _pwr_brd_led_power_3)) {
+		perf_count(_comms_errors);
+		return -EIO;
+	}
+
+	if (OK != set_LED_power(LED_POW_4_REG, _pwr_brd_led_power_4)) {
+		perf_count(_comms_errors);
+		return -EIO;
 	}
 
 	return ret;
-
 }
 
 int VOLIRO_PB::reset_sensor()
@@ -200,7 +231,7 @@ VOLIRO_PB::burst_collection()
 		return -EIO;
 	}
 
-	if (OK != get_regs(LED_BLINK_REG, &pwr_brd_blink_reg)) {
+	if (OK != get_regs(LED_REG, &pwr_brd_blink_reg)) {
 		return -EIO;
 	}
 
@@ -358,9 +389,6 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 {
 	uint8_t data[2];
 
-	data[0] = ptr;
-	data[1] = 0;
-
 	if (OK != _interface->write(ptr, &value, 1)) {
 		perf_count(_comms_errors);
 		return -EIO;
@@ -377,6 +405,19 @@ VOLIRO_PB::set_regs(uint8_t ptr, uint8_t value)
 	}
 
 	if (data[1] != value) {
+		return -EIO;
+	}
+
+	return OK;
+}
+
+/* Set LED status */
+int
+VOLIRO_PB::set_LED_status(uint8_t pwr_brd_led_status)
+{
+	pwr_brd_led_status = (uint8_t)(pwr_brd_led_status & 0x0f);
+
+	if (OK != set_regs(LED_STATS_REG, pwr_brd_led_status)) {
 		return -EIO;
 	}
 
@@ -402,7 +443,7 @@ VOLIRO_PB::set_LED_power(uint8_t ptr, uint8_t pwr_brd_led_pwr)
 int
 VOLIRO_PB::set_LED_blink_interval(uint8_t blink_interval_sec)
 {
-	uint8_t ptr = LED_BLINK_REG;
+	uint8_t ptr = LED_REG;
 	uint8_t led_blink_Reg;
 
 	if (OK != get_regs(ptr, &led_blink_Reg)) {
@@ -411,7 +452,7 @@ VOLIRO_PB::set_LED_blink_interval(uint8_t blink_interval_sec)
 
 	led_blink_Reg = ((led_blink_Reg << 4) & 0xf0) | (blink_interval_sec & 0x0f);
 
-	if (OK != set_regs(LED_BLINK_REG, led_blink_Reg)) {
+	if (OK != set_regs(LED_REG, led_blink_Reg)) {
 		return -EIO;
 	}
 
@@ -420,18 +461,18 @@ VOLIRO_PB::set_LED_blink_interval(uint8_t blink_interval_sec)
 
 /* Set LED number of blinks */
 int
-VOLIRO_PB::set_LED_number_of_blinks(uint8_t blink_number)
+VOLIRO_PB::set_LED_mask(uint8_t led_mask)
 {
-	uint8_t ptr = LED_BLINK_REG;
+	uint8_t ptr = LED_REG;
 	uint8_t led_blink_Reg;
 
 	if (OK != get_regs(ptr, &led_blink_Reg)) {
 		return -EIO;
 	}
 
-	led_blink_Reg = ((blink_number << 4) & 0xf0) | (led_blink_Reg & 0x0f);
+	led_blink_Reg = ((led_mask << 4) & 0xf0) | (led_blink_Reg & 0x0f);
 
-	if (OK != set_regs(LED_BLINK_REG, led_blink_Reg)) {
+	if (OK != set_regs(LED_REG, led_blink_Reg)) {
 		return -EIO;
 	}
 

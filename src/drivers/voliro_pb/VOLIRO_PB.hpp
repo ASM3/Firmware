@@ -26,7 +26,7 @@
 #define VOLIRO_PB_BUS_SPEED     100*1000  /* Power board I2C bus speed 												*/
 
 #define LED_STATS_REG			0x00	  /* Pointer to the address of the led board status register 				*/
-#define LED_BLINK_REG			0x01	  /* Pointer to the address of the led blink register  						*/
+#define LED_REG					0x01	  /* Pointer to the address of the led blink register  						*/
 #define LED_POW_1_REG			0x02	  /* Pointer to the address of the led power register of channel 1 			*/
 #define LED_POW_2_REG			0x03	  /* Pointer to the address of the led power register of channel 2  		*/
 #define LED_POW_3_REG			0x04	  /* Pointer to the address of the led power register of channel 3  		*/
@@ -98,8 +98,9 @@ private:
 
 	struct voliro_pb_calibration_s    _scale;
 
+	unsigned _pwr_brd_led_status;
 	unsigned _pwr_brd_led_blink_int;
-	unsigned _pwr_brd_led_blink_number;
+	unsigned _pwr_brd_led_mask;
 	unsigned _pwr_brd_led_remote_mode;
 	unsigned _pwr_brd_led_power_1;
 	unsigned _pwr_brd_led_power_2;
@@ -159,6 +160,13 @@ private:
 	int			set_regs(uint8_t ptr, uint8_t value);
 
 	/**
+	 * Set LEDs status values
+	 *
+	 * @return		OK if the measurement command was successful.
+	 */
+	int			set_LED_status(uint8_t pwr_brd_led_status);
+
+	/**
 	 * Set LEDs power values
 	 *
 	 * @return		OK if the measurement command was successful.
@@ -173,11 +181,11 @@ private:
 	int			set_LED_blink_interval(uint8_t blink_interval_sec);
 
 	/**
-	 * Set LEDs number of blinks
+	 * Set LEDs mask
 	 *
 	 * @return		OK if the measurement command was successful.
 	 */
-	int			set_LED_number_of_blinks(uint8_t blink_number);
+	int			set_LED_mask(uint8_t led_mask);
 
 	/**
 	 * Set/Reset LED remote mode
