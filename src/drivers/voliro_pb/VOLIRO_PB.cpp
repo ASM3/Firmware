@@ -527,35 +527,23 @@ int
 VOLIRO_PB::print_cal_info()
 {
 	perf_print_counter(_sample_perf);
-#if 0
-	printf("offsets system voltage (%.2f)\n", (double)_scale._bias_cal_term_system_volt);
-	printf("scaling system voltage (%.2f)\n", (double)_scale._SF_cal_term_system_volt);
 
-	printf("offsets mot L current (%.2f)\n", (double)_scale._bias_cal_term_mot_l_amp);
-	printf("scaling mot L current(%.2f)\n", (double)_scale._SF_cal_term_mot_l_amp);
-
-	printf("offsets mot R current(%.2f)\n", (double)_scale._bias_cal_term_mot_r_amp);
-	printf("scaling mot R current(%.2f)\n", (double)_scale._SF_cal_term_mot_r_amp);
-
-	printf("offsets servo voltage (%.2f)\n", (double)_scale._bias_cal_term_servo_volt);
-	printf("scaling servo voltage (%.2f)\n", (double)_scale._SF_cal_term_servo_volt);
-
-	printf("offsets analog current (%.2f)\n", (double)_scale._bias_cal_term_analog_amp);
-	printf("scaling analog current (%.2f)\n", (double)_scale._SF_cal_term_analog_amp);
-
-	printf("offsets digital voltage (%.2f)\n", (double)_scale._bias_cal_term_digital_volt);
-	printf("scaling digital voltage (%.2f)\n", (double)_scale._SF_cal_term_digital_volt);
-
-	printf("offsets digital current (%.2f)\n", (double)_scale._bias_cal_term_digital_amp);
-	printf("scaling system current (%.2f)\n", (double)_scale._SF_cal_term_digital_amp);
-
-	printf("offsets extension current (%.2f)\n", (double)_scale._bias_cal_term_ext_amp);
-	printf("scaling extension current (%.2f)\n", (double)_scale._SF_cal_term_ext_amp);
-
-	printf("offsets aux current (%.2f)\n", (double)_scale._bias_cal_term_aux_amp);
-	printf("scaling aux current (%.2f)\n", (double)_scale._SF_cal_term_aux_amp);
-#endif
-	printf("\n");
+	PX4_INFO("offsets system voltage (%.2f)\n", (double)_scale._bias_cal_term_system_volt);
+	PX4_INFO("scaling system voltage (%.2f)\n", (double)_scale._SF_cal_term_system_volt);
+	PX4_INFO("offsets system current (%.2f)\n", (double)_scale._bias_cal_term_system_amp);
+	PX4_INFO("scaling system current (%.2f)\n", (double)_scale._SF_cal_term_system_amp);
+	PX4_INFO("offsets battery voltage (%.2f)\n", (double)_scale._bias_cal_term_battery_volt);
+	PX4_INFO("scaling battery voltage (%.2f)\n", (double)_scale._SF_cal_term_battery_volt);
+	PX4_INFO("offsets battery current (%.2f)\n", (double)_scale._bias_cal_term_battery_amp);
+	PX4_INFO("scaling battery current (%.2f)\n", (double)_scale._SF_cal_term_battery_amp);
+	PX4_INFO("offsets 5V digital voltage (%.2f)\n", (double)_scale._bias_cal_term_5v_digital_amp);
+	PX4_INFO("scaling 5V digital voltage (%.2f)\n", (double)_scale._SF_cal_term_5v_digital_amp);
+	PX4_INFO("offsets 5V analog voltage (%.2f)\n", (double)_scale._bias_cal_term_5v_analog_amp);
+	PX4_INFO("scaling 5V analog voltage (%.2f)\n", (double)_scale._SF_cal_term_5v_analog_amp);
+	PX4_INFO("offsets 12V digital voltage (%.2f)\n", (double)_scale._bias_cal_term_12v_digital_amp);
+	PX4_INFO("scaling 12V digital voltage (%.2f)\n", (double)_scale._SF_cal_term_12v_digital_amp);
+	PX4_INFO("offsets 12V analog voltage (%.2f)\n", (double)_scale._bias_cal_term_12v_analog_amp);
+	PX4_INFO("scaling 12V analog voltage (%.2f)\n", (double)_scale._SF_cal_term_12v_analog_amp);
 
 	return OK;
 }
