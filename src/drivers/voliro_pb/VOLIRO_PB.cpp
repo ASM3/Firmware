@@ -101,7 +101,9 @@ int VOLIRO_PB::reset_sensor()
 {
 #if 0
 	/* send a reset command */
-	int ret = cmd_reset();
+	//int ret = cmd_reset();
+	uint8_t pwr_brd_led_status = 0x0f;
+	int ret = set_regs(LED_STATS_REG, pwr_brd_led_status);
 
 	if (ret != PX4_OK) {
 		perf_count(_comms_errors);
@@ -515,48 +517,14 @@ VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 		return -EIO;
 	}
 
-	//*channel_current = ((((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE / ADC_FULLSCALE) - ZERO_CURRENT_OFFSET_VOLTAGE) / CHANNEL_CURRENT_CONV_FACTOR;
 	*channel_current = ((((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1])) * VOLTAGE_FULLSCALE / ADC_FULLSCALE) -
 			    ZERO_CURRENT_OFFSET_VOLTAGE) / CHANNEL_CURRENT_CONV_FACTOR;
 
 	return OK;
 }
 
-/* Get motor current */
 int
-VOLIRO_PB::get_motor_current(uint8_t ptr, float *motor_current)
-{
-	uint8_t data[3];
-
-	if (OK != _interface->read(ptr, &data[0], 3)) {
-		perf_count(_comms_errors);
-		return -EIO;
-	}
-
-#if 0
-
-	if (ptr == MOT_L_CURRENT_REG) {
-		*motor_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 10.0f) * VOLTAGE_FULLSCALE /
-				 ADC_FULLSCALE / MOTOR_L_CURRENT_CONV_FARTOR;
-
-	} else if (ptr == MOT_R_CURRENT_REG) {
-		*motor_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 2.0f) * VOLTAGE_FULLSCALE /
-				 ADC_FULLSCALE / MOTOR_R_CURRENT_CONV_FARTOR;
-
-	} else if (ptr == EXT_CURRENT_REG) {
-		*motor_current = ((float)(((uint16_t)(data[2] & 0x3) << 8) | data[1]) - ADC_FULLSCALE / 2.0f) * VOLTAGE_FULLSCALE /
-				 ADC_FULLSCALE / EXT_CURRENT_CONV_FARTOR;
-
-	} else {
-		return -EIO;
-	}
-
-#endif
-	return OK;
-}
-
-int
-VOLIRO_PB::print_info()
+VOLIRO_PB::print_cal_info()
 {
 	perf_print_counter(_sample_perf);
 #if 0

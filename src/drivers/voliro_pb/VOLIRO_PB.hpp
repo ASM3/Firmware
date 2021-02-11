@@ -137,7 +137,7 @@ private:
 	 *
 	 * @return		OK if the measurement command was successful.
 	 */
-	int			print_info();
+	int			print_cal_info();
 
 	/**
 	 * Issue a sensor data burst collection command.
@@ -208,19 +208,4 @@ private:
 	 * @return		OK if the measurement command was successful.
 	 */
 	int			get_channel_current(uint8_t ptr, float *channel_current);
-
-	/**
-	 * Get power board motor current values
-	 *
-	 * @return		OK if the measurement command was successful.
-	 */
-	int			get_motor_current(uint8_t ptr, float *motor_current);
-
-	/**
-	 * Get power board data
-	 *
-	 * @return		OK if the measurement command was successful.
-	 */
-	int			get_pwr_brd_data();
-
 };
