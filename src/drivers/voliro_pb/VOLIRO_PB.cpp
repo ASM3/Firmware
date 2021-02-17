@@ -43,9 +43,8 @@ VOLIRO_PB::VOLIRO_PB(I2CSPIBusOption bus_option, int bus, device::Device *interf
 	_scale._SF_cal_term_12v_analog_amp = 1.0;
 	// default settings
 	_pwr_brd_led_status = 0;
-	_pwr_brd_led_blink_int = 0xf;
-	_pwr_brd_led_mask = 0x0;
-	_pwr_brd_led_remote_mode = true;
+	_pwr_brd_led_blink_int = 0x1;
+	_pwr_brd_led_mask = 0xf;
 	_pwr_brd_led_power_1 = 100;
 	_pwr_brd_led_power_2 = 80;
 	_pwr_brd_led_power_3 = 60;
@@ -60,6 +59,7 @@ VOLIRO_PB::~VOLIRO_PB()
 	delete _interface;
 }
 
+/* Sensor initialization */
 int
 VOLIRO_PB::init()
 {
@@ -83,6 +83,7 @@ VOLIRO_PB::reset()
 	return reset_sensor();
 }
 
+/* Sensor configuration */
 int
 VOLIRO_PB::configure_sensor()
 {
@@ -120,7 +121,7 @@ VOLIRO_PB::configure_sensor()
 
 	return ret;
 }
-
+/* Sensor reset */
 int VOLIRO_PB::reset_sensor()
 {
 
@@ -189,7 +190,7 @@ VOLIRO_PB::RunImpl()
 		break;
 	}
 }
-
+/* Burst data collection */
 int
 VOLIRO_PB::burst_collection()
 {
@@ -327,7 +328,7 @@ VOLIRO_PB::burst_collection()
 	/* filter values */
 	if (FILTERVALUES) {
 		report.pwr_brd_system_volt = _filter_v.apply(report.pwr_brd_system_volt);
-		// ADD other values ti filter
+		//ToDo: ADD other values to the filter
 	}
 
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));
@@ -355,12 +356,12 @@ VOLIRO_PB::burst_collection()
 
 	return OK;
 }
-
+/* Perform self test */
 int
 VOLIRO_PB::self_test()
 {
 	if (perf_event_count(_sample_perf) == 0) {
-		//collect();									//ToDo: implement self test function
+		//ToDo: implement self test function
 	}
 
 	/* return 0 on success, 1 else */
@@ -459,7 +460,7 @@ VOLIRO_PB::set_LED_blink_interval(uint8_t blink_interval_sec)
 	return OK;
 }
 
-/* Set LED number of blinks */
+/* Set LED mask */
 int
 VOLIRO_PB::set_LED_mask(uint8_t led_mask)
 {
@@ -473,31 +474,6 @@ VOLIRO_PB::set_LED_mask(uint8_t led_mask)
 	led_blink_Reg = ((led_mask << 4) & 0xf0) | (led_blink_Reg & 0x0f);
 
 	if (OK != set_regs(LED_REG, led_blink_Reg)) {
-		return -EIO;
-	}
-
-	return OK;
-}
-
-/* Set/Reset LED control remote mode*/
-int
-VOLIRO_PB::set_remote_mode_LED_control(bool remote_led_enable)
-{
-	uint8_t ptr = BRD_STATS_REG;
-	uint8_t status_reg;
-
-	if (OK != get_regs(ptr, &status_reg)) {
-		return -EIO;
-	}
-
-	if (remote_led_enable) {
-		status_reg |= (1 << LED_REMOTE_MODE_BIT);
-
-	} else {
-		status_reg &= ~(1 << LED_REMOTE_MODE_BIT);
-	}
-
-	if (OK != set_regs(BRD_STATS_REG, status_reg)) {
 		return -EIO;
 	}
 
@@ -537,6 +513,7 @@ VOLIRO_PB::get_channel_current(uint8_t ptr, float *channel_current)
 	return OK;
 }
 
+/* Print calibration information */
 int
 VOLIRO_PB::print_cal_info()
 {
@@ -562,6 +539,7 @@ VOLIRO_PB::print_cal_info()
 	return OK;
 }
 
+/* Print status */
 void
 VOLIRO_PB::print_status()
 {

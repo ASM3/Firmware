@@ -101,7 +101,6 @@ private:
 	unsigned _pwr_brd_led_status;
 	unsigned _pwr_brd_led_blink_int;
 	unsigned _pwr_brd_led_mask;
-	unsigned _pwr_brd_led_remote_mode;
 	unsigned _pwr_brd_led_power_1;
 	unsigned _pwr_brd_led_power_2;
 	unsigned _pwr_brd_led_power_3;
@@ -188,14 +187,7 @@ private:
 	int			set_LED_mask(uint8_t led_mask);
 
 	/**
-	 * Set/Reset LED remote mode
-	 *
-	 * @return		OK if the command setting was successful.
-	 */
-	int			set_remote_mode_LED_control(bool remote_led_enable);
-
-	/**
-	 * Get system/servo voltage values
+	 * Get system/battery voltage values
 	 *
 	 * @return		OK if the measurement command was successful.
 	 */
