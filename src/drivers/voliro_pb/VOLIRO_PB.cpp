@@ -316,19 +316,26 @@ VOLIRO_PB::burst_collection()
 	report.pwr_brd_led_3_pwr  = pwr_brd_led_3_pwr;
 	report.pwr_brd_led_4_pwr  = pwr_brd_led_4_pwr;
 
-	report.pwr_brd_system_volt = pwr_brd_system_v;
-	report.pwr_brd_battery_volt = pwr_brd_system_i;
-	report.pwr_brd_system_amp = pwr_brd_bat_v;
-	report.pwr_brd_battery_amp = pwr_brd_bat_i;
-	report.pwr_5v_analog_amp = pwr_5v_digital_i;
-	report.pwr_5v_digital_amp = pwr_5v_analog_i;
-	report.pwr_12v_analog_amp = pwr_12v_digital_i;
-	report.pwr_12v_digital_amp = pwr_12v_analog_i;
-
 	/* filter values */
 	if (FILTERVALUES) {
-		report.pwr_brd_system_volt = _filter_v.apply(report.pwr_brd_system_volt);
-		//ToDo: ADD other values to the filter
+		report.pwr_brd_system_volt = _filter_system_v.apply(pwr_brd_system_v);
+		report.pwr_brd_battery_volt = _filter_bat_v.apply(pwr_brd_bat_v);
+		report.pwr_brd_system_amp = _filter_system_i.apply(pwr_brd_system_i);
+		report.pwr_brd_battery_amp = _filter_bat_i.apply(pwr_brd_bat_i);
+		report.pwr_5v_analog_amp = _filter_5v_analog_i.apply(pwr_5v_analog_i);
+		report.pwr_5v_digital_amp = _filter_5v_digital_i.apply(pwr_5v_digital_i);
+		report.pwr_12v_analog_amp = _filter_12v_analog_i.apply(pwr_12v_analog_i);
+		report.pwr_12v_digital_amp = _filter_12v_digital_i.apply(pwr_12v_digital_i);
+
+	} else {
+		report.pwr_brd_system_volt = pwr_brd_system_v;
+		report.pwr_brd_battery_volt = pwr_brd_bat_v;
+		report.pwr_brd_system_amp = pwr_brd_system_i;
+		report.pwr_brd_battery_amp = pwr_brd_bat_i;
+		report.pwr_5v_analog_amp = pwr_5v_analog_i;
+		report.pwr_5v_digital_amp = pwr_5v_digital_i;
+		report.pwr_12v_analog_amp = pwr_12v_analog_i;
+		report.pwr_12v_digital_amp = pwr_12v_digital_i;
 	}
 
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));

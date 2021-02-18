@@ -106,8 +106,14 @@ private:
 	unsigned _pwr_brd_led_power_3;
 	unsigned _pwr_brd_led_power_4;
 
-	math::LowPassFilter2p _filter_v{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
-	//math::LowPassFilter2p _filter_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_system_v{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_bat_v{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_system_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_bat_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_5v_analog_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p _filter_5v_digital_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p _filter_12v_analog_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
+	math::LowPassFilter2p  _filter_12v_digital_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
 
 	/**
 	 * Perform power board configuration.
