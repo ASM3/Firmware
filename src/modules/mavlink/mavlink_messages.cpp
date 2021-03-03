@@ -1225,12 +1225,12 @@ public:
 
 	unsigned get_size() override
 	{
-		return MAVLINK_MSG_ID_SENS_ATMOS_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+		return _atmos_sub.advertised() ? (MAVLINK_MSG_ID_SENS_ATMOS_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) : 0;
 	}
 
 private:
 
-	uORB::Subscription _atmos_sub{ORB_ID(sensor_hum_temp)};
+	uORB::Subscription _atmos_sub{ORB_ID(sensor_hum_temp), 0};
 
 	/* do not allow top copying this class */
 	MavlinkStreamAtmos(MavlinkStreamAtmos &) = delete;
@@ -1247,7 +1247,7 @@ protected:
 
 			_atmos_sub.copy(&hum_temp_data);
 
-			mavlink_sens_atmos_t msg = {};
+			mavlink_sens_atmos_t msg{};
 
 			msg.timestamp = hum_temp_data.timestamp;
 			msg.Humidity = hum_temp_data.relative_humidity;

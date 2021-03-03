@@ -89,7 +89,7 @@ protected:
 		while ((_mavlink->get_free_tx_buf() >= get_size()) && _atmos_sub.update(&hum_temp_data)) {
 			mavlink_sens_atmos_t msg = {};
 
-			//msg.atmos_timestamp = hum_temp_data.timestamp;
+			msg.timestamp = hum_temp_data.timestamp;
 			msg.Humidity = hum_temp_data.relative_humidity;
 			msg.TempAmbient = hum_temp_data.ambient_temperature;
 
