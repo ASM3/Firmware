@@ -75,6 +75,7 @@
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/sensor_mag.h>
 #include <uORB/topics/sensor_selection.h>
+#include <uORB/topics/sensor_voliro_pb.h>
 #include <uORB/topics/telemetry_status.h>
 #include <uORB/topics/transponder_report.h>
 #include <uORB/topics/vehicle_air_data.h>
@@ -130,6 +131,7 @@ using matrix::wrap_2pi;
 #include "streams/STATUSTEXT.hpp"
 #include "streams/STORAGE_INFORMATION.hpp"
 #include "streams/TRAJECTORY_REPRESENTATION_WAYPOINTS.hpp"
+#include "streams/VOLIRO_PB.hpp"
 #include "streams/WIND_COV.hpp"
 
 #if !defined(CONSTRAINED_FLASH)
@@ -1207,6 +1209,85 @@ public:
 	unsigned get_size() override
 	{
 		return MAVLINK_MSG_ID_SCALED_PRESSURE3_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+};
+
+class MavlinkStreamVoliroPB : public MavlinkStream
+{
+public:
+	const char *get_name() const override
+	{
+		return MavlinkStreamVoliroPB::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "SENS_VOLIRO_PB";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_SENS_VOLIRO_PB;
+	}
+
+	uint16_t get_id() override
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamVoliroPB(mavlink);
+	}
+
+	unsigned get_size() override
+	{
+		return _voliro_pb_sub.advertised() ? (MAVLINK_MSG_ID_SENS_VOLIRO_PB_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) : 0;
+	}
+
+private:
+
+	uORB::Subscription _voliro_pb_sub{ORB_ID(sensor_voliro_pb), 0};
+	/* do not allow top copying this class */
+	MavlinkStreamVoliroPB(MavlinkStreamVoliroPB &) = delete;
+	MavlinkStreamVoliroPB &operator = (const MavlinkStreamVoliroPB &) = delete;
+
+protected:
+	explicit MavlinkStreamVoliroPB(Mavlink *mavlink) : MavlinkStream(mavlink)
+	{}
+
+	bool send() override
+	{
+		if (_voliro_pb_sub.updated()) {
+			sensor_voliro_pb_s voliro_pb_data{};
+
+			_voliro_pb_sub.copy(&voliro_pb_data);
+
+			mavlink_sens_voliro_pb_t msg{};
+
+			msg.timestamp = voliro_pb_data.timestamp;
+			msg.pwr_brd_status = voliro_pb_data.pwr_brd_status;
+			msg.pwr_brd_led_status  = voliro_pb_data.pwr_brd_led_status;
+			msg.pwr_brd_blink_status  = voliro_pb_data.pwr_brd_blink_reg;
+			msg.pwr_brd_power_led_1  = voliro_pb_data.pwr_brd_led_1_pwr;
+			msg.pwr_brd_power_led_2  = voliro_pb_data.pwr_brd_led_2_pwr;
+			msg.pwr_brd_power_led_3  = voliro_pb_data.pwr_brd_led_3_pwr;
+			msg.pwr_brd_power_led_4  = voliro_pb_data.pwr_brd_led_4_pwr;
+			msg.pwr_brd_system_volt = voliro_pb_data.pwr_brd_system_volt;
+			msg.pwr_brd_battery_volt = voliro_pb_data.pwr_brd_battery_volt;
+			msg.pwr_brd_system_current = voliro_pb_data.pwr_brd_system_amp;
+			msg.pwr_brd_battery_current = voliro_pb_data.pwr_brd_battery_amp;
+			msg.pwr_brd_5v_analog_current = voliro_pb_data.pwr_5v_analog_amp;
+			msg.pwr_brd_5v_digital_current = voliro_pb_data.pwr_5v_digital_amp;
+			msg.pwr_brd_12v_analog_current = voliro_pb_data.pwr_12v_analog_amp;
+			msg.pwr_brd_12v_digital_current = voliro_pb_data.pwr_12v_digital_amp;
+
+			mavlink_msg_sens_voliro_pb_send_struct(_mavlink->get_channel(), &msg);
+
+			return true;
+		}
+
+		return false;
 	}
 };
 
@@ -3152,8 +3233,11 @@ static const StreamListItem streams_list[] = {
 	create_stream_list_item<MavlinkStreamStorageInformation>(),
 #endif // STORAGE_INFORMATION_HPP
 #if defined(RAW_RPM_HPP)
-	create_stream_list_item<MavlinkStreamRawRpm>()
+	create_stream_list_item<MavlinkStreamRawRpm>(),
 #endif // RAW_RPM_HPP
+#if defined(VOLIRO_PB_HPP)
+	create_stream_list_item<MavlinkStreamVoliroPB>()
+#endif // VOLIRO_PB_HPP
 };
 
 const char *get_stream_name(const uint16_t msg_id)
