@@ -18,8 +18,15 @@
 #include <drivers/device/Device.hpp>
 #include <lib/drivers/voliro_pb/PX4Voliro_pb.hpp>
 #include <lib/perf/perf_counter.h>
+#include <lib/parameters/param.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <px4_platform_common/i2c_spi_buses.h>
+#include <uORB/Subscription.hpp>
+#include <uORB/SubscriptionInterval.hpp>
+#include <uORB/topics/parameter_update.h>
+
+using namespace time_literals;
+
 
 /* VOLIRO_PB internal constants and data structures.																*/
 #define VOLIRO_PB_SLAVE_ADDRESS	0x49      /* Power board I2C address												*/
@@ -115,6 +122,8 @@ private:
 	math::LowPassFilter2p _filter_12v_analog_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
 	math::LowPassFilter2p  _filter_12v_digital_i{VOLIRO_PB_MEAS_RATE, MEAS_DRIVER_FILTER_FREQ};
 
+	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
+
 	/**
 	 * Perform power board configuration.
 	 *
@@ -205,4 +214,12 @@ private:
 	 * @return		OK if the measurement command was successful.
 	 */
 	int			get_channel_current(uint8_t ptr, float *channel_current);
+
+	/**
+	 * Update all power board parameters
+	 *
+	 * @return		OK if the update command was successful.
+	 */
+	int			update_params(void);
+
 };

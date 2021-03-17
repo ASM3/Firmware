@@ -71,6 +71,9 @@ VOLIRO_PB::init()
 		return PX4_ERROR;
 	}
 
+	// Getting initial parameter values
+	update_params();
+
 	start();
 
 	return PX4_OK;
@@ -202,6 +205,17 @@ VOLIRO_PB::burst_collection()
 
 	/* this should be fairly close to the end of the conversion, so the best approximation of the time */
 	report.timestamp_sample = hrt_absolute_time();
+
+	// check for parameter updates
+	if (_parameter_update_sub.updated()) {
+		// clear update
+		parameter_update_s pupdate;
+		_parameter_update_sub.copy(&pupdate);
+
+		// update parameters from storage
+		update_params();
+	}
+
 
 	/* fetch the raw value */
 
@@ -341,7 +355,7 @@ VOLIRO_PB::burst_collection()
 	_px4_voliro_pb.set_error_count(perf_event_count(_comms_errors));
 
 	_px4_voliro_pb.update(report);
-
+#if 0
 	PX4_INFO("VOLIRO_PB: %x, %x, %x, %u, %u, %u, %u, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f, %3.2f",
 		 report.pwr_brd_status,
 		 report.pwr_brd_led_status,
@@ -358,7 +372,7 @@ VOLIRO_PB::burst_collection()
 		 (double) report.pwr_5v_digital_amp,
 		 (double) report.pwr_12v_analog_amp,
 		 (double) report.pwr_12v_digital_amp);
-
+#endif
 	perf_end(_sample_perf);
 
 	return OK;
@@ -436,9 +450,7 @@ VOLIRO_PB::set_LED_status(uint8_t pwr_brd_led_status)
 int
 VOLIRO_PB::set_LED_power(uint8_t ptr, uint8_t pwr_brd_led_pwr)
 {
-	/* input power -> scale to percentage 0 -100% */
-
-	pwr_brd_led_pwr = (uint8_t)((float)pwr_brd_led_pwr * 2.55f);
+	/* power -> scaled to 0-255 */
 
 	if (OK != set_regs(ptr, pwr_brd_led_pwr)) {
 		return -EIO;
@@ -553,4 +565,60 @@ VOLIRO_PB::print_status()
 	I2CSPIDriverBase::print_status();
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_comms_errors);
+}
+
+/* Update parameters */
+int
+VOLIRO_PB::update_params()
+{
+	int32_t value = 0;
+
+	param_get(param_find("LED_BLINK_INT"), &value);
+	_pwr_brd_led_blink_int = ((uint8_t) value) & 0xf;
+
+	param_get(param_find("LED_MASK"), &value);
+	_pwr_brd_led_mask = ((uint8_t) value) & 0xf;
+
+	param_get(param_find("LED_PWR_1"), &value);
+	_pwr_brd_led_power_1 = (uint8_t)(value * 255 / 100);
+
+	param_get(param_find("LED_PWR_2"), &value);
+	_pwr_brd_led_power_2 = (uint8_t)(value * 255 / 100);
+
+	param_get(param_find("LED_PWR_3"), &value);
+	_pwr_brd_led_power_3 = (uint8_t)(value * 255 / 100);
+
+	param_get(param_find("LED_PWR_4"), &value);
+	_pwr_brd_led_power_4 = (uint8_t)(value * 255 / 100);
+
+	param_get(param_find("CAL_B_SYS_VOLT"), &_scale._bias_cal_term_system_volt);
+	param_get(param_find("CAL_SF_SYS_VOLT"), &_scale._SF_cal_term_system_volt);
+	param_get(param_find("CAL_B_SYS_CUR"), &_scale._bias_cal_term_system_amp);
+	param_get(param_find("CAL_SF_SYS_CUR"), &_scale._SF_cal_term_system_amp);
+
+	param_get(param_find("CAL_B_BAT_VOLT"), &_scale._bias_cal_term_battery_volt);
+	param_get(param_find("CAL_SF_BAT_VOLT"), &_scale._SF_cal_term_battery_volt);
+	param_get(param_find("CAL_B_BAT_CUR"), &_scale._bias_cal_term_battery_amp);
+	param_get(param_find("CAL_SF_BAT_CUR"), &_scale._SF_cal_term_battery_amp);
+
+	param_get(param_find("CAL_B_5V_D_CUR"), &_scale._bias_cal_term_5v_digital_amp);
+	param_get(param_find("CAL_SF_5V_D_CUR"), &_scale._SF_cal_term_5v_digital_amp);
+	param_get(param_find("CAL_B_5V_A_CUR"), &_scale._bias_cal_term_5v_analog_amp);
+	param_get(param_find("CAL_SF_5V_A_CUR"), &_scale._SF_cal_term_5v_analog_amp);
+
+	param_get(param_find("CAL_B_12V_D_CUR"), &_scale._bias_cal_term_12v_digital_amp);
+	param_get(param_find("CAL_SF_12V_D_CUR"), &_scale._SF_cal_term_12v_digital_amp);
+	param_get(param_find("CAL_B_12V_A_CUR"), &_scale._bias_cal_term_12v_analog_amp);
+	param_get(param_find("CAL_B_12V_A_CUR"), &_scale._SF_cal_term_12v_analog_amp);
+
+	/* sensor configuration with the updated values */
+	if (configure_sensor() == PX4_OK) {
+		ScheduleDelayed(10_ms);
+
+	} else {
+		PX4_INFO("Fail to set VOLIRO_PB parameters");
+		return -EIO;
+	}
+
+	return OK;
 }

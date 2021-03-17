@@ -1,0 +1,248 @@
+module_name: voliro_pb
+
+parameters:
+    - group: Voliro PB
+      definitions:
+        LED_BLINK_INT:
+            description:
+                short: LED blink frequency
+                long: |
+                    The frequncy at which the LED shold blink.
+            type: int32
+            unit: Hz
+            min: 1
+            max: 14
+            default: 2
+
+        LED_MASK:
+            description:
+                short: LED mask
+                long: |
+                    Enable/disable a certain LED
+            type: enum
+            values:
+                0: XXXX
+                1: XXX0
+                2: XX0X
+                3: XX00
+                4: X0XX
+                5: X0X0
+                6: X00X
+                7: X000
+                8: 0XXX
+                9: 0XX0
+                10: 0X0X
+                11: 0X00
+                12: 00XX
+                13: 00X0
+                14: 000X
+                15: 0000
+            default: 15
+
+        LED_PWR_1:
+            description:
+                short: LED power 1
+                long: |
+                    Set the illuminance level for the LED
+            type: int32
+            unit: '%'
+            min: 0
+            max: 100
+            default: 50
+
+        LED_PWR_2:
+            description:
+                short: LED power 2
+                long: |
+                    Set the illuminance level for the LED
+            type: int32
+            unit: '%'
+            min: 0
+            max: 100
+            default: 50
+
+        LED_PWR_3:
+            description:
+                short: LED power 3
+                long: |
+                    Set the illuminance level for the LED
+            type: int32
+            unit: '%'
+            min: 0
+            max: 100
+            default: 50
+
+        LED_PWR_4:
+            description:
+                short: LED power 4
+                long: |
+                    Set the illuminance level for the LED
+            type: int32
+            unit: '%'
+            min: 0
+            max: 100
+            default: 50
+
+        CAL_B_SYS_VOLT:
+            description:
+                short: Bias system voltage
+                long: |
+                    Bias calibration term for the system voltage
+            type: float
+            unit: V
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_SYS_VOLT:
+            description:
+                short: SF system voltage
+                long: |
+                    SF calibration term for the system voltage
+            type: float
+            unit: V
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_BAT_VOLT:
+            description:
+                short: Bias battery voltage
+                long: |
+                    Bias calibration term for the battery voltage
+            type: float
+            unit: V
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_BAT_VOLT:
+            description:
+                short: SF battery voltage
+                long: |
+                    SF calibration term for the battery voltage
+            type: float
+            unit: V
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_SYS_CUR:
+            description:
+                short: Bias system current
+                long: |
+                    Bias calibration term for the system current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_SYS_CUR:
+            description:
+                short: SF system current
+                long: |
+                    SF calibration term for the system current
+            type: float
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_BAT_CUR:
+            description:
+                short: Bias battery current
+                long: |
+                    Bias calibration term for the system current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_BAT_CUR:
+            description:
+                short: SF battery current
+                long: |
+                    SF calibration term for the battery current
+            type: float
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_5V_D_CUR:
+            description:
+                short: Bias 5v ch digital current
+                long: |
+                    Bias calibration term for the 5V digital channel current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_5V_D_CUR:
+            description:
+                short: SF 5v ch digital current
+                long: |
+                    SF calibration term for the 5V digital channel current
+            type: float
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_5V_A_CUR:
+            description:
+                short: Bias 5v ch analoge current
+                long: |
+                    Bias calibration term for the 5V analoge channel current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_5V_A_CUR:
+            description:
+                short: SF 5v ch analoge current
+                long: |
+                    SF calibration term for the 5V analoge channel current
+            type: float
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_12V_D_CUR:
+            description:
+                short: Bias 12v ch digital current
+                long: |
+                    Bias calibration term for the 12V digital channel current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_12V_D_CUR:
+            description:
+                short: SF 12v ch digital current
+                long: |
+                    SF calibration term for the 12V digital channel current
+            type: float
+            min: -100
+            max: 100
+            default: 1
+
+        CAL_B_12V_A_CUR:
+            description:
+                short: Bias 12v ch analoge current
+                long: |
+                    Bias calibration term for the 12V analoge channel current
+            type: float
+            min: -100
+            max: 100
+            default: 0
+
+        CAL_SF_12V_A_CUR:
+            description:
+                short: SF 12v ch analoge current
+                long: |
+                    SF calibration term for the 12V analoge channel current
+            type: float
+            min: -100
+            max: 100
+            default: 1
