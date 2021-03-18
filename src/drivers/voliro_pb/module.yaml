@@ -3,11 +3,12 @@ module_name: voliro_pb
 parameters:
     - group: Voliro PB
       definitions:
+
         LED_BLINK_INT:
             description:
                 short: LED blink frequency
                 long: |
-                    The frequncy at which the LED shold blink.
+                    The blinking frequency of the LED
             type: int32
             unit: Hz
             min: 1
@@ -22,21 +23,21 @@ parameters:
             type: enum
             values:
                 0: XXXX
-                1: XXX0
-                2: XX0X
-                3: XX00
-                4: X0XX
-                5: X0X0
-                6: X00X
-                7: X000
-                8: 0XXX
-                9: 0XX0
-                10: 0X0X
-                11: 0X00
-                12: 00XX
-                13: 00X0
-                14: 000X
-                15: 0000
+                1: XXXO
+                2: XXOX
+                3: XXOO
+                4: XOXX
+                5: XOXO
+                6: XOOX
+                7: XOOO
+                8: OXXX
+                9: OXXO
+                10: OXOX
+                11: OXOO
+                12: OOXX
+                13: OOXO
+                14: OOOX
+                15: OOOO
             default: 15
 
         LED_PWR_1:
@@ -189,9 +190,9 @@ parameters:
 
         CAL_B_5V_A_CUR:
             description:
-                short: Bias 5v ch analoge current
+                short: Bias 5v ch analog current
                 long: |
-                    Bias calibration term for the 5V analoge channel current
+                    Bias calibration term for the 5V analog channel current
             type: float
             min: -100
             max: 100
@@ -199,9 +200,9 @@ parameters:
 
         CAL_SF_5V_A_CUR:
             description:
-                short: SF 5v ch analoge current
+                short: SF 5v ch analog current
                 long: |
-                    SF calibration term for the 5V analoge channel current
+                    SF calibration term for the 5V analog channel current
             type: float
             min: -100
             max: 100
@@ -229,9 +230,9 @@ parameters:
 
         CAL_B_12V_A_CUR:
             description:
-                short: Bias 12v ch analoge current
+                short: Bias 12v ch analog current
                 long: |
-                    Bias calibration term for the 12V analoge channel current
+                    Bias calibration term for the 12V analog channel current
             type: float
             min: -100
             max: 100
@@ -239,9 +240,9 @@ parameters:
 
         CAL_SF_12V_A_CUR:
             description:
-                short: SF 12v ch analoge current
+                short: SF 12v ch analog current
                 long: |
-                    SF calibration term for the 12V analoge channel current
+                    SF calibration term for the 12V analog channel current
             type: float
             min: -100
             max: 100
